@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Redis - nimble data bacon</title>
+
+  <meta name="author"   content="Harold Giménez">
+  <meta name="viewport" content="width=1024, user-scalable=no">
+
+  <!-- Core and extension CSS files -->
+  <link rel="stylesheet" href="../deckjs/core/deck.core.css">
+  <link rel="stylesheet" href="../deckjs/extensions/navigation/deck.navigation.css">
+
+  <!-- Theme CSS files (menu swaps these out) -->
+  <link rel="stylesheet" id="style-theme-link" href="../deckjs/themes/style/swiss.css">
+  <link rel="stylesheet" id="transition-theme-link" href="../deckjs/themes/transition/horizontal-slide.css">
+
+
+  <script src="../deckjs/modernizr.custom.js"></script>
+</head>
+<body class="deck-container">
+
+<div class="slide">
+  <h1>Redis &#8212; nimble data bacon</h1>
+  <h3>PostgreSQL Conference West 2011 - San Jose</h3>
+  <h4>Harold Giménez</h4>
+</div>
+
+<div class="slide" id="who">
+  <h2>Who am I?</h2>
+  <ul>
+    <li><p>Developer at thoughtbot</p></li>
+    <li><p>Consulting, Training and Products</p></li>
+    <li><p>Focus on Ruby, Rails, Javascript</p></li>
+    <li><p>Community and Open Source</p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>This talk is about</h2>
+  <ul>
+    <li><p>What is Redis</p></li>
+    <li><p>Features</p></li>
+    <li><p>Data types</p></li>
+    <li><p>Operations</p></li>
+    <li><p>Use cases</p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>What is Redis</h2>
+  <ul>
+    <li><p>Advanced key-value store, data structure server</p></li>
+    <li><p>Values go beyond simple strings</p></li>
+    <li><p>Single threaded</p></li>
+    <li><p>In-memory database, persists to disk</p></li>
+    <li><p>Server side operations and queries</p></li>
+    <li><p>Server side programmability with Lua</p></li>
+    <li><p>Open Source (BSD based license), received sponsorship from VMWare</p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Persistance</h2>
+  <ul>
+    <li><p><em>Snapshotting</em>: saves snapshots to disk (every 60 sec by default)</p></li>
+    <li><p><code>fork</code>, save, and replace file</p></li>
+    <li><p><code>save 30 2000</code>: dump to disk every 30 seconds if at least 2000 keys have changed</p></li>
+    <li><p><em>Append-only file</em>: Turn on with <code>appendonly yes</code></p></li>
+    <li><p>Changes are written to the AOF when data is modified, and is replayed when it starts</p></li>
+    <li><p>Send <code>BGREWRITEAOF</code> to rebuild AOF with shortest possible sequence of commands, essentially compressing the AOF</p></li>
+    <li><p>Configurable <code>fsync</code> calls - always, every second, never (let the OS decide)</p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Replication</h2>
+  <ul>
+    <li><p>Master slave built in</p></li>
+    <li><p>Master with multiple slaves. Slaves can connect to other slaves</p></li>
+    <li><p>How it works</p>
+      <ul>
+        <li><p>Slave sends a <code>SYNC</code> command to master</p></li>
+        <li><p>Master dumps current <strike>bacon</strike> state to slave in the background</p></li>
+        <li><p>Link is kept open and replays <strike>bacon bits</strike> commands there</p></li>
+      </ul>
+    </li>
+    <li><p>Very simple to configure: set <code>slaveof [ip address] [port]</code></p></li>
+    <li><p>Common uses</p>
+      <ul>
+        <li><p>Failover</p></li>
+        <li><p>Offload read-heavy operations to slaves</p></li>
+        <li><p>Turn off save on master, let slaves save</p></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Redis data types</h2>
+  <ul>
+    <li>String</li>
+    <li>List</li>
+    <li>Set</li>
+    <li>Sorted Set</li>
+    <li>Hash</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>A word about keys</h2>
+  <ul>
+    <li><em>Not</em> binary safe</li>
+    <li>Keep them short</li>
+    <li>Use <code>:</code> to namespace. For example, <code>user:1935:rating</code></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Strings</h2>
+  <ul>
+    <li><p>Most basic data type</p></li>
+    <li><p>Use <code>set</code> and <code>get</code></p></li>
+    <li><p><code>set user:1234:rating 29</code></p></li>
+    <li><p><code>get user:1234:rating</code></p></li>
+    <li><p>Numeric type? Atomic increments: <code>incr user:1234:pageviews</code>. you can also <code>incrby</code>, <code>decr</code> and <code>decrby</code></p></li>
+    <li><p>Set a new value, getting the old: <code>getset user:1234:rating 3</code></p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Strings use cases</h2>
+  <ul>
+    <li><p>Disable app features.</p></li>
+    <pre><code>inc features:twitter
+# twitter goes down?
+del features:twitter
+</code></pre>
+    <li><p>Application code checks for <code>features:twitter</code> before using feature</p></li>
+    <li><p>Auto remove features:twitter when related exception caught.</p></li>
+    <li><p>Ruby <code>rollout</code> gem supports other use cases</p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Lists</h2>
+  <ul>
+    <li><p>Ordered sequence of elements (a linked list)</p></li>
+    <li><p>Add to the head in constant time. Retrieve from head in constant time. Slow to retrieve from middle.</p></li>
+    <li><p><code>lpush</code>, <code>rpush</code>, <code>lrange</code></p></li>
+  </ul>
+  <pre></code>$ rpush recipes:salad "Chop lettuce"
+OK
+$ rpush recipes:salad "Add smoked bacon bits"
+OK
+$ rpush recipes:salad "Sprinkle cheese"
+OK
+$ rpush recipes:salad "Add dijon mustard"
+OK
+$ lrange messages 0 3
+1. Chop lettuce
+2. Add smoked bacon bits
+3. Sprinkle cheese
+4. Add dijon mustard</code></pre>
+  <ul>
+    <li><p>More commonly, PKs from main data store will be stored in sets</p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>List operations</h2>
+  <ul>
+    <li><p>Get the length: <code>llen recipes:salad</code></p></li>
+    <li><p>Remove elements: <code>lrem recipes:salad 0 1</code></p></li>
+    <li><p>Operate on the left: <code>lpush</code>, <code>lpop</code>, <code>ltrim</code></p></li>
+    <li><p>Pop from the left, blocking: <code>blpop</code>
+    <li><p>Operate on the right: <code>rpush</code>, <code>rpop</code>, <code>rtrim</code></p></li>
+    <li><p>Pop from the right, blocking: <code>brpop</code>
+    <li><p>Grab a few elements: <code>lrange recipes:salad 0 -1</code>, or <code>rrange</code></p></li>
+    <li><p>Set a value by index:<code>lset recipes:salad 3 "Add more cheese"</code></p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Lists use cases</h2>
+  <ul>
+    <li>Queues - no sorting required, cheap queing and pulling. See <a href="http://github.com/defunkt/resque">resque</a></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Sets</h2>
+  <ul>
+    <li><p>Unordered collections</p></li>
+    <pre><code>
+    </code></pre>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Set use cases</h2>
+  <ul>
+    <li><p>Tags: <code>sadd recipes:143:tags</p></li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Sorted Sets</h2>
+</div>
+
+<div class="slide">
+  <h2>Hashes</h2>
+</div>
+
+<div class="slide">
+  <h2>Expiration</h2>
+</div>
+
+<div class="slide">
+  <h2>Real life usage</h2>
+  <ul>
+    <li><p>Rate limiting API usage</p></li>
+    <li><p>Track how many hits by user/account</p></li>
+    <li><p>User/account gets a key: <code>account:123:api.hits</code></p></li>
+    <li><p>When user hits endpoint:</p>
+    <ul>
+      <li><p>If key exists, increment. Then check if it's over the limit</p></li>
+      <li><p>If key does not exist, increment and <code>setex</code></p></li>
+    </ul>
+    </li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Pipelining</h2>
+</div>
+
+<div class="slide">
+  <h2>Pub/Sub</h2>
+</div>
+
+  <script src="../deckjs/jquery.min.js"></script>
+  <script src="../deckjs/core/deck.core.js"></script>
+  <script src="../deckjs/extensions/navigation/deck.navigation.js"></script>
+
+  <script type="text/javascript">
+    $(function() {
+      $.deck('.slide');
+    });
+  </script>
+</body>
+</html>
