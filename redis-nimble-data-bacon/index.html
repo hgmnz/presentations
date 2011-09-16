@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <title>Redis - nimble data bacon</title>
+  <title>Redis &#8212; nimble data bacon</title>
 
   <meta name="author"   content="Harold Giménez">
   <meta name="viewport" content="width=1024, user-scalable=no">
@@ -22,8 +22,9 @@
 </head>
 <body class="deck-container">
 
-<div class="slide">
-  <h1>Redis &#8212; nimble data bacon</h1>
+<div class="slide" id="welcome">
+  <h1>Redis</h1>
+  <h2>nimble data bacon</h2>
   <h3>PostgreSQL Conference West 2011 - San Jose</h3>
   <h4>Harold Giménez</h4>
 </div>
@@ -64,11 +65,15 @@
 
 <div class="slide">
   <h2>Persistance</h2>
+  <h3>Snapshotting</h3>
   <ul>
-    <li><p><em>Snapshotting</em>: saves snapshots to disk (every 60 sec by default)</p></li>
+    <li><p>saves snapshots to disk (every 60 sec by default)</p></li>
     <li><p><code>fork</code>, save, and replace file</p></li>
     <li><p><code>save 30 2000</code>: dump to disk every 30 seconds if at least 2000 keys have changed</p></li>
-    <li><p><em>Append-only file</em>: Turn on with <code>appendonly yes</code></p></li>
+  </ul>
+  <h3>Append-only file</h3>
+  <ul>
+    <li><p>Turn on with <code>appendonly yes</code></p></li>
     <li><p>Changes are written to the AOF when data is modified, and is replayed when it starts</p></li>
     <li><p>Send <code>BGREWRITEAOF</code> to rebuild AOF with shortest possible sequence of commands, essentially compressing the AOF</p></li>
     <li><p>Configurable <code>fsync</code> calls - always, every second, never (let the OS decide)</p></li>
@@ -77,8 +82,8 @@
 
 <div class="slide">
   <h2>Replication</h2>
+  <h3>Master slave built in</h3>
   <ul>
-    <li><p>Master slave built in</p></li>
     <li><p>Master with multiple slaves. Slaves can connect to other slaves</p></li>
     <li><p>How it works</p>
       <ul>
@@ -88,13 +93,12 @@
       </ul>
     </li>
     <li><p>Very simple to configure: set <code>slaveof [ip address] [port]</code></p></li>
-    <li><p>Common uses</p>
-      <ul>
-        <li><p>Failover</p></li>
-        <li><p>Offload read-heavy operations to slaves</p></li>
-        <li><p>Turn off save on master, let slaves save</p></li>
-      </ul>
-    </li>
+  </ul>
+  <h3>Common uses</h3>
+  <ul>
+    <li><p>Failover</p></li>
+    <li><p>Offload read-heavy operations to slaves</p></li>
+    <li><p>Turn off save on master, let slaves save</p></li>
   </ul>
 </div>
 
@@ -131,16 +135,21 @@
 </div>
 
 <div class="slide">
-  <h2>Strings use cases</h2>
-  <ul>
-    <li><p>Disable app features.</p></li>
-    <pre><code>inc features:twitter
-# twitter goes down?
-del features:twitter
-</code></pre>
-    <li><p>Application code checks for <code>features:twitter</code> before using feature</p></li>
-    <li><p>Auto remove features:twitter when related exception caught.</p></li>
-    <li><p>Ruby <code>rollout</code> gem supports other use cases</p></li>
+  <h2>String use cases</h2>
+  <h3>Disable application features</h3>
+    <p>Enable twitter integration</p>
+    <pre><code>inc features:twitter</code></pre>
+    <p>Application code checks for <code>features:twitter</code> before using feature</p>
+    <pre><code>if Feature.enabled?(:twitter)
+  # perform twitter integration
+end</code></pre>
+    <p>Auto remove <code>features:twitter</code> when related exception caught.</p>
+    <pre><code>begin
+  user.fetch_twitter_feed
+rescue
+  # del features:twitter
+end</code></pre>
+    <p>Ruby <code>rollout</code> gem supports other use cases</p>
   </ul>
 </div>
 
@@ -151,19 +160,15 @@ del features:twitter
     <li><p>Add to the head in constant time. Retrieve from head in constant time. Slow to retrieve from middle.</p></li>
     <li><p><code>lpush</code>, <code>rpush</code>, <code>lrange</code></p></li>
   </ul>
-  <pre></code>$ rpush recipes:salad "Chop lettuce"
-OK
-$ rpush recipes:salad "Add smoked bacon bits"
-OK
-$ rpush recipes:salad "Sprinkle cheese"
-OK
-$ rpush recipes:salad "Add dijon mustard"
-OK
-$ lrange messages 0 3
-1. Chop lettuce
-2. Add smoked bacon bits
-3. Sprinkle cheese
-4. Add dijon mustard</code></pre>
+  <pre></code>rpush recipes:salad "Chop lettuce"
+rpush recipes:salad "Add smoked bacon bits"
+rpush recipes:salad "Sprinkle cheese"
+rpush recipes:salad "Add dijon mustard"
+lrange recipes:salad 0 3
+1) "Chop lettuce"
+2) "Add smoked bacon bits"
+3) "Sprinkle cheese"
+4) "Add dijon mustard"</code></pre>
   <ul>
     <li><p>More commonly, PKs from main data store will be stored in sets</p></li>
   </ul>
@@ -185,29 +190,63 @@ $ lrange messages 0 3
 
 <div class="slide">
   <h2>Lists use cases</h2>
-  <ul>
-    <li>Queues - no sorting required, cheap queing and pulling. See <a href="http://github.com/defunkt/resque">resque</a></li>
-  </ul>
+  <h3>Queues</h3>
+  <p>Got a new job? place it on the queue</p>
+  <pre><code>rpush queue:email.subscribed 632 #user id</code></pre>
+  <p>Spin up some workers, have them wait on the queue and do work</p>
+  <pre><code>blpop queue:email.subscribed
+SELECT * FROM users WHERE id = $1;
+send subscription email to user</code></pre>
+  <p>Take a look at <a href="https://github.com/defunkt/resque/">resque</a></p>
 </div>
 
 <div class="slide">
   <h2>Sets</h2>
   <ul>
     <li><p>Unordered collections</p></li>
-    <pre><code>
-    </code></pre>
+    <li><p>Unique</p></li>
+    <li><p>Add and remove members, check for membership, intersect, union, difference</p></li>
+    <pre><code>sadd bacon_types "back"
+sadd bacon_types "cottage"
+sadd body_parts "back"
+sadd body_parts "neck"
+sismember body_parts "cottage"
+sinter bacon_types body_parts
+sinterstore best_bacon body_parts bacon_types
+smembers best_bacon
+1) "back"</code></pre>
   </ul>
 </div>
 
 <div class="slide">
   <h2>Set use cases</h2>
-  <ul>
-    <li><p>Tags: <code>sadd recipes:143:tags</p></li>
-  </ul>
+  <h3>Tagging</h3>
 </div>
 
 <div class="slide">
   <h2>Sorted Sets</h2>
+  <ul>
+    <li>Each member also has a score</li>
+    <li>Used for ranking or indexing</li>
+    <li>What are the most visited pages on the site?</li>
+    <li>Which users have spent the most dollars?</li>
+    <li>Which products have received the most +1s?</li>
+    <li>Which hacker has made most commits to PostgreSQL in the last twelve weeks?</li>
+  </ul>
+  <pre><code>git shortlog -ns --since="12 weeks ago" | awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | sh
+redis-cli zrange pgcommits -3 -1
+1) "Peter Eisentraut"
+2) "Bruce Momjian"
+3) "Tom Lane"</code></pre>
+  <ul>
+    <li>Which made more than 20 commits?</li>
+  </ul>
+    <pre><code>redis-cli zrangebyscore pgcommits 20 inf
+1) "Heikki Linnakangas"
+2) "Robert Haas"
+3) "Peter Eisentraut"
+4) "Bruce Momjian"
+5) "Tom Lane"</code></pre>
 </div>
 
 <div class="slide">
