@@ -55,10 +55,9 @@
   <ul>
     <li><p>Advanced key-value store, data structure server</p></li>
     <li><p>Values go beyond simple strings</p></li>
-    <li><p>Single threaded</p></li>
     <li><p>In-memory database, persists to disk</p></li>
     <li><p>Server side operations and queries</p></li>
-    <li><p>Server side programmability with Lua</p></li>
+    <li><p>Single threaded</p></li>
     <li><p>Open Source (BSD based license), received sponsorship from VMWare</p></li>
   </ul>
 </div>
@@ -116,7 +115,7 @@
 <div class="slide">
   <h2>A word about keys</h2>
   <ul>
-    <li><em>Not</em> binary safe</li>
+    <li><p><em>Not</em> binary safe</p></li>
     <li><p>Keep them short</p></li>
     <li><p>Use <code>:</code> to namespace. For example, <code>user:1935:rating</code></p></li>
     <li><p><code>KEYS user:*:rating</code> returns keys. Similarly <code>TYPE</code> will also give their types</p></li>
@@ -127,11 +126,11 @@
   <h2>Strings</h2>
   <ul>
     <li><p>Most basic data type</p></li>
-    <li><p>Use <code>set</code> and <code>get</code></p></li>
-    <li><p><code>set user:1234:rating 29</code></p></li>
-    <li><p><code>get user:1234:rating</code></p></li>
-    <li><p>Numeric type? Atomic increments: <code>incr user:1234:pageviews</code>. you can also <code>incrby</code>, <code>decr</code> and <code>decrby</code></p></li>
-    <li><p>Set a new value, getting the old: <code>getset user:1234:rating 3</code></p></li>
+    <li><p>Use <code>SET</code> and <code>GET</code></p></li>
+    <li><p><code>SET user:1234:rating 29</code></p></li>
+    <li><p><code>GET user:1234:rating</code></p></li>
+    <li><p>Numeric type? Atomic increments: <code>INCR user:1234:pageviews</code>. you can also <code>INCRBY</code>, <code>DECR</code> and <code>DECRBY</code></p></li>
+    <li><p>Set a new value, getting the old: <code>GETSET user:1234:rating 3</code></p></li>
   </ul>
 </div>
 
@@ -148,9 +147,8 @@ end</code></pre>
     <pre><code>begin
   user.fetch_twitter_feed
 rescue
-  # del features:twitter
+  (DEL features:twitter)
 end</code></pre>
-    <p>Ruby <code>rollout</code> gem supports other use cases</p>
   </ul>
 </div>
 
@@ -159,13 +157,13 @@ end</code></pre>
   <ul>
     <li><p>Ordered sequence of elements (a linked list)</p></li>
     <li><p>Add to the head in constant time. Retrieve from head in constant time. Slow to retrieve from middle.</p></li>
-    <li><p><code>lpush</code>, <code>rpush</code>, <code>lrange</code></p></li>
+    <li><p><code>LPUSH</code>, <code>RPUSH</code>, <code>LRANGE</code></p></li>
   </ul>
-  <pre></code>rpush recipes:salad "Chop lettuce"
-rpush recipes:salad "Add smoked bacon bits"
-rpush recipes:salad "Sprinkle cheese"
-rpush recipes:salad "Add dijon mustard"
-lrange recipes:salad 0 3
+  <pre></code>RPUSH recipes:salad "Chop lettuce"
+RPUSH recipes:salad "Add smoked bacon bits"
+RPUSH recipes:salad "Sprinkle cheese"
+RPUSH recipes:salad "Add dijon mustard"
+LRANGE recipes:salad 0 3
 1) "Chop lettuce"
 2) "Add smoked bacon bits"
 3) "Sprinkle cheese"
@@ -193,9 +191,9 @@ lrange recipes:salad 0 3
   <h2>Lists in the wild</h2>
   <h3>Queues</h3>
   <p>Got a new job? place it on the queue</p>
-  <pre><code>rpush queue:email.subscribed 632 #user id</code></pre>
+  <pre><code>RPUSH queue:email.subscribed 632 #user id</code></pre>
   <p>Spin up some workers, have them wait on the queue and do work</p>
-  <pre><code>blpop queue:email.subscribed
+  <pre><code>BLPOP queue:email.subscribed
 SELECT * FROM users WHERE id = $1;
 send subscription email to user</code></pre>
   <p>Take a look at <a href="https://github.com/defunkt/resque/">resque</a></p>
@@ -204,24 +202,25 @@ send subscription email to user</code></pre>
 <div class="slide">
   <h2>Sets</h2>
   <ul>
-    <li><p>Unordered collections</p></li>
-    <li><p>Unique</p></li>
+    <li><p>Unordered collections of unique elements</p></li>
+    <li><p>add elements with <code>SADD</code></p></li>
+    <li><p>Remove elements with <code>SDEL</code>
     <li><p>Add and remove members, check for membership, intersect, union, difference</p></li>
-    <pre><code>sadd bacon_types "back"
-sadd bacon_types "cottage"
-sadd body_parts "back"
-sadd body_parts "neck"
-sismember body_parts "cottage"
-sinter bacon_types body_parts
-sinterstore best_bacon body_parts bacon_types
-smembers best_bacon
+    <pre><code>SADD bacon_types "back"
+SADD bacon_types "cottage"
+SADD body_parts "back"
+SADD body_parts "neck"
+SISMEMBER body_parts "cottage"
+SINTER bacon_types body_parts
+SINTERSTORE best_bacon body_parts bacon_types
+SMEMBERS best_bacon
 1) "back"</code></pre>
   </ul>
 </div>
 
 <div class="slide">
   <h2>Sets in the wild</h2>
-  <h3>Tagging</h3>
+  <!-- TODO -->
 </div>
 
 <div class="slide">
@@ -231,6 +230,7 @@ smembers best_bacon
     <li>What are the most visited pages on the site?</li>
     <li>Which users have spent the most dollars?</li>
     <li>Which products have been downloaded the most today?</li>
+  </ul>
 </div>
 
 <div class="slide">
@@ -253,18 +253,9 @@ redis-cli zrange pgcommits -5 -1
 </div>
 
 <div class="slide">
-  <h2>Sorted Set use cases</h2>
-  <h3>Real-time ranking</h3>
-  <ul>
-    <li>What are the most visited pages on the site?</li>
-    <li>Which users have spent the most dollars in the last hour?</li>
-    <li>Which products have been downloaded the most today?</li>
-  </ul>
-</div>
-
-<div class="slide">
   <h2>Sorted Sets in the wild</h2>
   <h3>Case study - downloads count on rubygems.org</h3>
+  <!-- TODO -->
 </div>
 
 <div class="slide">
@@ -277,6 +268,59 @@ redis-cli zrange pgcommits -5 -1
     <li><p>Can also increment integers within the hash with <code>HINCRBY</code></p></li>
     <li><p><code>HDEL hash_name key</code> to deletea key within the hash.</p></li>
   </ul>
+</div>
+
+<div class="slide">
+  <h2>Hashes in the wild</h2>
+  <h3>Real-time storing events (page views, API hits) over time</h3>
+  <p>When a user hits our API</p>
+  <pre><code>SADD api:users 123
+HINCRBY api:users:123 "total" 1
+HINCRBY api:users:123 8713987142 1 # store a timestamp corresponding to the day
+</code></pre>
+  <p>Retreiving prior 7 days worth of data</p>
+<pre><code># produce timestamps corresponding to prior 7 days
+HMGET api:users:123 timestamp1 timestamp2 ... timestamp7</pre></code>
+  <p>Store anything prior to that in PostgreSQL warehouse. Either manually delete, or set expiry on older data</p>
+  <p>Retrieve heavy users in the past hour, and cache the result</p>
+  <pre><code>SORT api:users BY api:users:*->8713987142 DESC GET # GET api:users:*->8713987142 LIMIT 0 5</code></pre>
+</div>
+
+<div class="slide">
+  <h2>Expiration</h2>
+  <ul>
+    <li>Any key in Redis can be expired</li>
+    <li><p><code>SET key value</code></li>
+    <li><p><code>EXPIRE key 60</code> will expire the key</li>
+    <li><p><code>SETEXP key 60 value</code> equivalent of the two above commands in a transaction</li>
+    <li><p><code>PERSIST</code> removes expiration from a key</li>
+    <li><p><code>TTL key</code> tells you the remaining time to live</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Expiration in the wild</h2>
+  <h3>Expiring caches</h3>
+  <p>Back to our previous example: When calculating data, check the cache first</p>
+  <pre><code>lrange api:users:top 60 0 -1</code></pre>
+  <p>Doesn't exist? Calculate and cache it for an hour</p>
+  <pre><code>SORT api:users BY api:users:*->8713987142 DESC \
+  GET # GET api:users:*->8713987142 LIMIT 0 5 \
+  STORE api:users:top
+EXPIRE api:users:top 3600</code></pre>
+</div>
+
+<div class="slide">
+  <h2>Expiration in the wild</h2>
+  <h3>Rate limiting</h3>
+  <p>Goal: Only allow MAX_ALLOWED API hits a minute per account</p>
+  <pre><code># project 123 hits your API
+if !(exists project:123:hits) {
+  (setex project:123:hits, 60, 0)
+}
+incr project:123:hits
+project:123:hits > MAX_ALLOWED
+</code></pre>
 </div>
 
 <div class="slide">
@@ -324,34 +368,6 @@ sismember project:135:globals 'Null Bacon Exception' # false</code></pre>
 </div>
 
 <div class="slide">
-  <h2>Expiration</h2>
-  <ul>
-    <li>Any key in Redis can be expired</li>
-    <li><p><code>SET key value</code></li>
-    <li><p><code>EXPIRE key 60</code> will expire the key</li>
-    <li><p><code>SETEXP key 60 value</code> equivalent of the two above commands in a transaction</li>
-    <li><p><code>PERSIST</code> removes expiration from a key</li>
-  </ul>
-</div>
-
-<div class="slide">
-  <h2>Expiration in the wild</h2>
-  <h3>Rate limiting</h3>
-  <p>Goal: Only allow MAX_ALLOWED API hits a minute per account</p>
-  <pre><code># project 123 hits your API
-if !(exists project:123:hits) {
-  (setex project:123:hits, 60, 0)
-}
-incr project:123:hits
-project:123:hits > MAX_ALLOWED
-</code></pre>
-</div>
-
-<div class="slide">
-  <h2>Pipelining</h2>
-</div>
-
-<div class="slide">
   <h2>Pub/Sub</h2>
   <ul>
     <li><p>Native support for Publish/Subscribe pattern.</p></li>
@@ -364,22 +380,28 @@ project:123:hits > MAX_ALLOWED
 </div>
 
 <div class="slide">
-  <h2>BONUS! Foreign data wrapper</h2>
+  <h2>We just scratched the surface</h2>
+  <ul>
+    <li><p>many other commands available, go to <a href="http://redis.io">redis.io</a></p></li>
+    <li><p>easily connect from <a href="https://github.com/antirez/hiredis">c</a>,
+              <a href="https://github.com/mrpi/redis-cplusplus-client">c++</a>,
+              <a href="https://github.com/xetorthio/jedis">java</a>,
+              <a href="https://github.com/melo/perl-redis">perl</a>,
+              <a href="https://github.com/andymccurdy/redis-py">python</a>,
+              <a href="https://github.com/ezmobius/redis-rb">ruby</a> and
+              <a href="http://redis.io/clients">more</a>.</p></li>
+    <li><p>try redis now: <a href="http://try.redis-db.com/">try.redis-db.com</a></p></li>
+    <li><p>Other topics include Pipelining, GETBIT and SETBIT, GETRANGE and SETRANGE.</p></li>
+  </ul>
+  <h3>Coming soon to Redis</h3>
+  <ul>
+    <li><p>Server side programmability with Lua</p></li>
+    <li><p>Redis cluster</p></li>
+  </ul>
 </div>
 
 <div class="slide">
-  <h2>We just scratched the surface</h2>
-  <ul>
-    <li><p>Many other commands available, go to <a href="http://redis.io">redis.io</a></p></li>
-    <li><p>Easily connect from <a href="https://github.com/antirez/hiredis">C</a>,
-              <a href="https://github.com/mrpi/redis-cplusplus-client">C++</a>,
-              <a href="https://github.com/xetorthio/jedis">Java</a>,
-              <a href="https://github.com/melo/perl-redis">Perl</a>,
-              <a href="https://github.com/andymccurdy/redis-py">Python</a>,
-              <a href="https://github.com/ezmobius/redis-rb">Ruby</a> and
-              <a href="http://redis.io/clients">more</a>.</p></li>
-    <li><p>Try redis now: <a href="http://try.redis-db.com/">try.redis-db.com</a></p></li>
-  </ul>
+  <h1>thanks</h1>
 </div>
 
   <script src="../deckjs/jquery.min.js"></script>
