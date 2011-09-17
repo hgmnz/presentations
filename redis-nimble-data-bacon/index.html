@@ -73,8 +73,8 @@
   </ul>
   <h3>Append-only file</h3>
   <ul>
-    <li><p>Turn on with <code>appendonly yes</code></p></li>
     <li><p>Changes are written to the AOF when data is modified, and is replayed when it starts</p></li>
+    <li><p>Turn on with <code>appendonly yes</code></p></li>
     <li><p>Send <code>BGREWRITEAOF</code> to rebuild AOF with shortest possible sequence of commands, essentially compressing the AOF</p></li>
     <li><p>Configurable <code>fsync</code> calls - always, every second, never (let the OS decide)</p></li>
   </ul>
@@ -170,7 +170,7 @@ lrange recipes:salad 0 3
 3) "Sprinkle cheese"
 4) "Add dijon mustard"</code></pre>
   <ul>
-    <li><p>More commonly, PKs from main data store will be stored in sets</p></li>
+    <li><p>More commonly, PKs from main data store will be stored in lists</p></li>
   </ul>
 </div>
 
@@ -226,27 +226,45 @@ smembers best_bacon
 <div class="slide">
   <h2>Sorted Sets</h2>
   <ul>
-    <li>Each member also has a score</li>
-    <li>Used for ranking or indexing</li>
+    <li>Each member also has a score, used for ranking or indexing</li>
     <li>What are the most visited pages on the site?</li>
     <li>Which users have spent the most dollars?</li>
-    <li>Which products have received the most +1s?</li>
-    <li>Which hacker has made most commits to PostgreSQL in the last twelve weeks?</li>
-  </ul>
-  <pre><code>git shortlog -ns --since="12 weeks ago" | awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | sh
-redis-cli zrange pgcommits -3 -1
-1) "Peter Eisentraut"
-2) "Bruce Momjian"
-3) "Tom Lane"</code></pre>
-  <ul>
-    <li>Which made more than 20 commits?</li>
-  </ul>
-    <pre><code>redis-cli zrangebyscore pgcommits 20 inf
+    <li>Which products have been downloaded the most today?</li>
+</div>
+
+<div class="slide">
+  <h2>Sorted Set use cases</h2>
+  <h3>Git commits</h3>
+  <p>Which hackers have made most commits to PostgreSQL in the last twelve weeks?</p>
+  <pre><code>git shortlog -ns --since="12 weeks ago" | \
+awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | \
+sh
+redis-cli zrange pgcommits -5 -1
 1) "Heikki Linnakangas"
 2) "Robert Haas"
 3) "Peter Eisentraut"
 4) "Bruce Momjian"
 5) "Tom Lane"</code></pre>
+  <p>Which made more than 75 commits?</p>
+    <pre><code>redis-cli zrangebyscore pgcommits 75 inf
+1) "Bruce Momjian"
+2) "Tom Lane"</code></pre>
+</div>
+
+<div class="slide">
+  <h2>Sorted Set use cases</h2>
+  <h3>Real-time ranking</h3>
+  <ul>
+    <li>What are the most visited pages on the site?</li>
+    <li>Which users have spent the most dollars in the last hour?</li>
+    <li>Which products have been downloaded the most today?</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Sorted Set use cases</h2>
+  <h3>Case study - downloads count on rubygems.org</h3>
+  
 </div>
 
 <div class="slide">
@@ -254,7 +272,46 @@ redis-cli zrange pgcommits -3 -1
 </div>
 
 <div class="slide">
+  <h2>Multi/Exec</h2>
+</div>
+
+<div class="slide">
+  <h2>Multi/Exec use case</h2>
+  <h3>Global errors on Airbrake</h3>
+  <p>Some errors are global and are grouped as such</p>
+  <p>User defines global errors and we store those on redis</p>
+  <pre><code>multi
+del project:135:globals
+sadd project:135:globals 'Database Connection Error'
+sadd project:135:globals 'External Service Error'
+exec</code></pre>
+  <p>When we receive a new exception, check against this set if it's global</p>
+<pre><code>sismember project:135:globals 'Database Connection Error' #true
+sismember project:135:globals 'Null Bacon Exception' # false</code></pre>
+</div>
+
+<div class="slide">
   <h2>Expiration</h2>
+  <ul>
+    <li>Any key in Redis can be expired</li>
+    <li><p><code>SET key value</code></li>
+    <li><p><code>EXPIRE key 60</code> will expire the key</li>
+    <li><p><code>SETEXP key 60 value</code> equivalent of the two above commands in a transaction</li>
+    <li><p><code>PERSIST</code> removes expiration from a key</li>
+  </ul>
+</div>
+
+<div class="slide">
+  <h2>Expiration use case</h2>
+  <h3>Rate limiting</h3>
+  <p>Goal: Only allow MAX_ALLOWED API hits a minute per account</p>
+  <pre><code># project 123 hits your API
+if !(exists project:123:hits) {
+  (setex project:123:hits, 60, 0)
+}
+incr project:123:hits
+project:123:hits > MAX_ALLOWED
+</code></pre>
 </div>
 
 <div class="slide">
@@ -278,6 +335,25 @@ redis-cli zrange pgcommits -3 -1
 
 <div class="slide">
   <h2>Pub/Sub</h2>
+</div>
+
+<div class="slide">
+  <h2>BONUS! Foreign data wrapper</h2>
+</div>
+
+<div class="slide">
+  <h2>We just scratched the surface</h2>
+  <ul>
+    <li><p>Many other commands available, go to <a href="http://redis.io">redis.io</a></p></li>
+    <li><p>Easily connect from <a href="https://github.com/antirez/hiredis">C</a>,
+              <a href="https://github.com/mrpi/redis-cplusplus-client">C++</a>,
+              <a href="https://github.com/xetorthio/jedis">Java</a>,
+              <a href="https://github.com/melo/perl-redis">Perl</a>,
+              <a href="https://github.com/andymccurdy/redis-py">Python</a>,
+              <a href="https://github.com/ezmobius/redis-rb">Ruby</a> and
+              <a href="http://redis.io/clients">more</a>.</p></li>
+    <li><p>Try redis now: <a href="http://try.redis-db.com/">try.redis-db.com</a></p></li>
+  </ul>
 </div>
 
   <script src="../deckjs/jquery.min.js"></script>
