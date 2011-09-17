@@ -117,8 +117,9 @@
   <h2>A word about keys</h2>
   <ul>
     <li><em>Not</em> binary safe</li>
-    <li>Keep them short</li>
-    <li>Use <code>:</code> to namespace. For example, <code>user:1935:rating</code></li>
+    <li><p>Keep them short</p></li>
+    <li><p>Use <code>:</code> to namespace. For example, <code>user:1935:rating</code></p></li>
+    <li><p><code>KEYS user:*:rating</code> returns keys. Similarly <code>TYPE</code> will also give their types</p></li>
   </ul>
 </div>
 
@@ -135,7 +136,7 @@
 </div>
 
 <div class="slide">
-  <h2>String use cases</h2>
+  <h2>String in the wild</h2>
   <h3>Disable application features</h3>
     <p>Enable twitter integration</p>
     <pre><code>inc features:twitter</code></pre>
@@ -189,7 +190,7 @@ lrange recipes:salad 0 3
 </div>
 
 <div class="slide">
-  <h2>Lists use cases</h2>
+  <h2>Lists in the wild</h2>
   <h3>Queues</h3>
   <p>Got a new job? place it on the queue</p>
   <pre><code>rpush queue:email.subscribed 632 #user id</code></pre>
@@ -219,7 +220,7 @@ smembers best_bacon
 </div>
 
 <div class="slide">
-  <h2>Set use cases</h2>
+  <h2>Sets in the wild</h2>
   <h3>Tagging</h3>
 </div>
 
@@ -233,12 +234,12 @@ smembers best_bacon
 </div>
 
 <div class="slide">
-  <h2>Sorted Set use cases</h2>
+  <h2>Sorted Set example</h2>
   <h3>Git commits</h3>
   <p>Which hackers have made most commits to PostgreSQL in the last twelve weeks?</p>
   <pre><code>git shortlog -ns --since="12 weeks ago" | \
-awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | \
-sh
+  awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | \
+  sh
 redis-cli zrange pgcommits -5 -1
 1) "Heikki Linnakangas"
 2) "Robert Haas"
@@ -262,21 +263,53 @@ redis-cli zrange pgcommits -5 -1
 </div>
 
 <div class="slide">
-  <h2>Sorted Set use cases</h2>
+  <h2>Sorted Sets in the wild</h2>
   <h3>Case study - downloads count on rubygems.org</h3>
-  
 </div>
 
 <div class="slide">
   <h2>Hashes</h2>
+  <ul>
+    <li><p>Associate a group of attributes</p></li>
+    <li><p>Store several keys and their values inside one key</p></li>
+    <li><p><code>HGET hash_name key value</code> to set a value</p></li>
+    <li><p><code>HGET hash_name key</code> to get a value, <code>HGETALL</code> to fetch entire hash</p></li>
+    <li><p>Can also increment integers within the hash with <code>HINCRBY</code></p></li>
+    <li><p><code>HDEL hash_name key</code> to deletea key within the hash.</p></li>
+  </ul>
 </div>
 
 <div class="slide">
   <h2>Multi/Exec</h2>
+  <ul>
+    <li><p>Allows transactional behavior in Redis</p></li>
+    <li><p>Multiple commands guaranteed to run sequentially</p></li>
+    <li><p>No other clients get served during a multi/exec block</p></li>
+  </ul>
+  <pre><code>MULTI
+write data
+write more data
+get some data
+EXEC</code></pre>
 </div>
 
 <div class="slide">
-  <h2>Multi/Exec use case</h2>
+  <h2>Multi/Exec</h2>
+  <h3>Optimistic locking</h3>
+  <ul>
+    <li><p>But what about when the data you want to write depends on stored data</p></li>
+    <li><p><code>WATCH</code> the key to implement optimistic locking</p></li>
+  </ul>
+  <pre><code>WATCH user:123:ranking
+rank     = GET user:123:ranking
+new_rank = some calculation using rank
+MULTI
+SET user:123:ranking $new_rank
+EXEC</code></pre>
+</div>
+
+<div class="slide">
+  <h2>Multi/Exec in the wild</h2>
   <h3>Global errors on Airbrake</h3>
   <p>Some errors are global and are grouped as such</p>
   <p>User defines global errors and we store those on redis</p>
@@ -302,7 +335,7 @@ sismember project:135:globals 'Null Bacon Exception' # false</code></pre>
 </div>
 
 <div class="slide">
-  <h2>Expiration use case</h2>
+  <h2>Expiration in the wild</h2>
   <h3>Rate limiting</h3>
   <p>Goal: Only allow MAX_ALLOWED API hits a minute per account</p>
   <pre><code># project 123 hits your API
@@ -315,26 +348,19 @@ project:123:hits > MAX_ALLOWED
 </div>
 
 <div class="slide">
-  <h2>Real life usage</h2>
-  <ul>
-    <li><p>Rate limiting API usage</p></li>
-    <li><p>Track how many hits by user/account</p></li>
-    <li><p>User/account gets a key: <code>account:123:api.hits</code></p></li>
-    <li><p>When user hits endpoint:</p>
-    <ul>
-      <li><p>If key exists, increment. Then check if it's over the limit</p></li>
-      <li><p>If key does not exist, increment and <code>setex</code></p></li>
-    </ul>
-    </li>
-  </ul>
-</div>
-
-<div class="slide">
   <h2>Pipelining</h2>
 </div>
 
 <div class="slide">
   <h2>Pub/Sub</h2>
+  <ul>
+    <li><p>Native support for Publish/Subscribe pattern.</p></li>
+    <li><p><code>PUBLISH chat:bacon.talk "I'm hungry!"</code>publishes to bacon talk channel</p></li>
+    <li><p><code>SUBSCRIBE chat:bacon.talk</code>subscribes to bacon talk channel</p></li>
+    <li><p><code>UNSUBSCRIBE chat:bacon.talk</code>unsubscribes from bacon talk channel</p></li>
+    <li><p><code>PSUBSCRIBE chat:bacon*</code>subscribes to all channels about bacon</p></li>
+    <li><p><code>PUNSUBSCRIBE chat:onion*</code>unsubscribes from all channels about onion</p></li>
+  </ul>
 </div>
 
 <div class="slide">
