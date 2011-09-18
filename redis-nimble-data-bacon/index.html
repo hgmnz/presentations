@@ -138,7 +138,7 @@
   <h2>String in the wild</h2>
   <h3>Disable application features</h3>
     <p>Enable twitter integration</p>
-    <pre><code>inc features:twitter</code></pre>
+    <pre><code>INC features:twitter</code></pre>
     <p>Application code checks for <code>features:twitter</code> before using feature</p>
     <pre><code>if Feature.enabled?(:twitter)
   # perform twitter integration
@@ -272,7 +272,7 @@ redis-cli zrange pgcommits -5 -1
     <li><p><code>HGET hash_name key value</code> to set a value</p></li>
     <li><p><code>HGET hash_name key</code> to get a value, <code>HGETALL</code> to fetch entire hash</p></li>
     <li><p>Can also increment integers within the hash with <code>HINCRBY</code></p></li>
-    <li><p><code>HDEL hash_name key</code> to deletea key within the hash.</p></li>
+    <li><p><code>HDEL hash_name key</code> to delete a key within the hash.</p></li>
   </ul>
 </div>
 
@@ -288,14 +288,14 @@ HINCRBY api:users:123 8713987142 1 # store a timestamp corresponding to the day
 <pre><code># produce timestamps corresponding to prior 7 days
 HMGET api:users:123 timestamp1 timestamp2 ... timestamp7</pre></code>
   <p>Store anything prior to that in PostgreSQL warehouse. Either manually delete, or set expiry on older data</p>
-  <p>Retrieve heavy users in the past hour, and cache the result</p>
+  <p>Retrieve heavy users in the past hour</p>
   <pre><code>SORT api:users BY api:users:*->8713987142 DESC GET # GET api:users:*->8713987142 LIMIT 0 5</code></pre>
 </div>
 
 <div class="slide">
   <h2>Expiration</h2>
   <ul>
-    <li>Any key in Redis can be expired</li>
+    <li><p>Any key in Redis can be expired</p></li>
     <li><p><code>SET key value</code></li>
     <li><p><code>EXPIRE key 60</code> will expire the key</li>
     <li><p><code>SETEXP key 60 value</code> equivalent of the two above commands in a transaction</li>
