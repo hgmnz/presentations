@@ -15,6 +15,7 @@
 
   <!-- Theme CSS files (menu swaps these out) -->
   <link rel="stylesheet" id="style-theme-link" href="../deckjs/themes/style/thoughtbot-workshops.css">
+  <link rel="stylesheet" href="./custom.css" type="text/css">
   <!--<link rel="stylesheet" id="transition-theme-link" href="../deckjs/themes/transition/horizontal-slide.css">-->
 
   <script src="../deckjs/modernizr.custom.js"></script>
@@ -33,9 +34,17 @@
   <ul>
     <li><p>Developer at thoughtbot</p></li>
     <li><p>Consulting, Training and Products</p></li>
-    <li><p>Focus on Ruby, Rails, Javascript</p></li>
+    <li><p>Focus on Ruby, Rails, Javascript. Process, agile and releasing.</p></li>
     <li><p>Community and Open Source</p></li>
   </ul>
+</section>
+
+<section class="slide title">
+  <h1>A DBA goes to a NOSQL bar...</h1>
+</section>
+
+<section class="slide title">
+  <h1>...and leaves because there are no tables</h1>
 </section>
 
 <section class="slide">
@@ -55,10 +64,12 @@
     <li><p>Advanced key-value store, data structure server</p></li>
     <li><p>Values go beyond simple strings</p></li>
     <li><p>In-memory database, persists to disk</p></li>
+    <li><p>Fast</p></li>
     <li><p>Server side operations and queries</p></li>
+    <li><p>Fast!</p></li>
     <li><p>Single threaded</p></li>
+    <li><p>Really Fast!</p></li>
     <li><p>Open Source (BSD based license), with sponsorship from VMWare</p></li>
-    <li><p>Fast!</li></p>
   </ul>
 </section>
 
@@ -104,17 +115,6 @@
     <li><p>Turn off save on master, let slaves save</p></li>
   </ul>
 </section>
-
-<section class="slide">
-  <h2>A word about keys</h2>
-  <ul>
-    <li><p><em>Not</em> binary safe</p></li>
-    <li><p>Keep them short</p></li>
-    <li><p>Use <code>:</code> to namespace. For example, <code>user:1935:rating</code></p></li>
-    <li><p><code>KEYS user:*:rating</code> returns keys. Similarly <code>TYPE</code> will also give their types</p></li>
-  </ul>
-</section>
-
 <section class="slide">
   <h2>Redis data types</h2>
   <ul>
@@ -123,6 +123,17 @@
     <li>Set</li>
     <li>Sorted Set</li>
     <li>Hash</li>
+  </ul>
+</section>
+
+
+<section class="slide">
+  <h2>A word about keys</h2>
+  <ul>
+    <li><p><em>Not</em> binary safe</p></li>
+    <li><p>Keep them short</p></li>
+    <li><p>Use <code>:</code> to namespace. For example, <code>user:1935:rating</code></p></li>
+    <li><p><code>KEYS user:*:rating</code> returns keys. Similarly <code>TYPE</code> will also give their types</p></li>
   </ul>
 </section>
 
@@ -148,7 +159,7 @@
     <p>Enable credit card processing gateway</p>
     <pre><code>INC features:payment_gateway</code></pre>
     <p>Application code checks for <code>features:payment_gateway</code> before using feature</p>
-    <pre><code>if Feature.enabled?(:payment_gateway)
+    <pre><code>if REDIS[ EXISTS features:payment_gateway ]
   # Perform payment, eat bacon
 end</code></pre>
 </section>
@@ -159,7 +170,7 @@ end</code></pre>
     <pre><code>begin
   subscription.charge!
 rescue
-  REDIS[ DEL features:payemnt_gateway ]
+  REDIS[ DEL features:payment_gateway ]
 end</code></pre>
   </ul>
 </section>
@@ -228,7 +239,7 @@ send subscription email to user</code></pre>
 <section class="slide">
   <h2>Lists in the wild</h2>
   <h3>Caching most recent/most likely viewable data</h3>
-  <p>SQL alone can be a scalability problem, instead let's keep references to recent data in redis</p>
+  <p>SQL alone can introduce a scalability problem, instead let's keep references to recent data in redis</p>
   <pre><code>REDIS[ LPUSH project:123:exceptions 532 ]
 REDIS[ LTRIM project:123:exceptions 0 100 ]
 ids    = REDIS[ LRANGE projects:123:exceptions 0, 19 ]
@@ -302,8 +313,40 @@ redis-cli zrange pgcommits -5 -1
 <section class="slide">
   <h2>Sorted Sets in the wild</h2>
   <h3>Case study - downloads count on rubygems.org</h3>
-  <!-- TODO -->
+  <p>Want to track:</p>
+  <ul>
+    <li><p>How many total downloads today?</p></li>
+    <li><p>How many total downloads of a rubygem?</p></li>
+    <li><p>How many downloads of a rubygem today?</p></li>
+    <li><p>How many total downloads of a specific rubygem version?</p></li>
+    <li><p>How many downloads of a specific rubygem version today?</p></li>
+  </ul>
 </section>
+
+<section class="slide">
+  <h2>Sorted Sets in the wild</h2>
+  <h3>Case study - downloads count on rubygems.org</h3>
+  <p>When the rake 0.9.1 is installed:</p>
+  <pre><code>INC downloads
+INC downloads:rubygems:rake
+INC downloads:version:rake-0.9.1
+ZINCRBY downloads:today 1 rake-0.9.1</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Sorted Sets in the wild</h2>
+  <h3>Case study - downloads count on rubygems.org</h3>
+  <p>Clean up on a daily cron job</p>
+<pre><code>REDIS[ RENAME downloads:today downloads:yesterday ]
+keys = REDIS[ ZRANGE downloads:yesterday 0 -1 ]
+each key in keys do
+  version   = SQL[ SELECT * FROM versions WHERE name = $key; ]
+  downloads = REDIS[ ZSCORE downloads:yesterday key ]
+  REDIS[ HINCRBY downloads:version_daily:`version.full_name` Date.today downloads ]
+  REDIS[ HINCRBY downloads:rubygem_daily:`version.rubygem_name` Date.today downloads ]
+end</code></pre>
+</section>
+
 
 <section class="slide title">
   <h1>Hashes</h1>
@@ -370,9 +413,9 @@ EXPIRE api:users:top 3600</code></pre>
   <h3>Rate limiting</h3>
   <p>Goal: Only allow MAX_ALLOWED API hits a minute per account</p>
   <pre><code># project 123 hits your API
-if !(REDIS[ EXISTS project:123:hits ]) {
+if !REDIS[ EXISTS project:123:hits ])
   REDIS[ SETEX project:123:hits, 60, 0 ]
-}
+end
 REDIS[ incr project:123:hits ]
 REDIS[ project:123:hits ] > MAX_ALLOWED
 </code></pre>
@@ -406,9 +449,11 @@ EXEC</code></pre>
   <pre><code>REDIS[ WATCH user:123:ranking ]
 rank     = REDIS[ GET user:123:ranking ]
 new_rank = some calculation using rank
-REDIS[ MULTI
-SET user:123:ranking $new_rank
-EXEC ]</code></pre>
+REDIS[
+  MULTI
+  SET user:123:ranking $new_rank
+  EXEC
+]</code></pre>
 </section>
 
 <section class="slide">
@@ -461,6 +506,8 @@ sismember project:135:globals 'Null Bacon Exception' # false</code></pre>
 
 <section class="slide title">
   <h1>thanks</h1>
+  <h4>PostgreSQL Conference West 2011 - San Jose</h4>
+  <h5>Harold Giménez - @hgimenez</h5>
 </section>
 
   <script src="../deckjs/jquery.min.js"></script>
