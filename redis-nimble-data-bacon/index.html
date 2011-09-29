@@ -285,10 +285,36 @@ SMEMBERS best_bacon
 
 <section class="slide">
   <h2>Sets in the wild</h2>
-  <h2>How many users view the web front end?</h2>
-<pre><code>#user id 123 views project 789
-SADD web:<beginning-of-day>:789 123
-</code></pre>
+  <h3>Real time targetting service</h3>
+  <p>The problem:</p>
+  <ul>
+    <li><p>Offer sport products to Males ages 14 through 30</p></li>
+    <li><p>Offer weight loss products to women ages 25 through 35</p></li>
+    <li><p>Offer bacon to non-vegetarians ages 21 through 40 in the midwest</p></li>
+  </ul>
+  <pre><code>SELECT users.* FROM users
+  INNER JOIN demographics on users.id = demographics.user_id
+  INNER JOIN user_addresses on users.id = user_addresses.address_id
+  INNER JOIN addresses on user_addresses.address_id = addresses.id
+  INNER JOIN preferences on users.id = preferences.user_id
+WHERE EXTRACT('year' from AGE(CURRENT_TIMESTAMP, demographics.date_of_birth)) between 21 and 40;
+  AND NOT preferences.vegetarian
+  AND addresses.region = 'US/Midwest'</code></pre>
+  <p>Surprise! This will not run in a few miliseconds</p>
+</section>
+
+<section class="slide">
+  <h2>Sets in the wild</h2>
+  <h3>Real time targetting service</h3>
+  <p>Solution: prepopulate a cache in redis with a background worker, have it immediately available</p>
+  <pre><code># find each user id
+user_ids.each do |user_id|
+  REDIS[ SADD target:bacon <user id> ]
+end</code></pre>
+  <p>Grab targetted users with <code>SMEMBERS target:bacon</code></p>
+  <p>Find if a user is targetted with <code>SISMEMBER target:bacon <user-id></code></p>
+  <p>Target a new member with <code>SADD target:bacon <user-id></code></p>
+  <p>Untarget a new member with <code>SREM target:bacon <user-id></code></p>
 </section>
 
 <section class="slide title">
