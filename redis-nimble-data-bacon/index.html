@@ -211,7 +211,7 @@ LRANGE recipes:salad 0 3
     <li><p>Operate on the right: <code>rpush</code>, <code>rpop</code>, <code>rtrim</code></p></li>
     <li><p>Pop from the right, blocking: <code>brpop</code>
     <li><p>Grab a few elements: <code>lrange recipes:salad 0 -1</code>, or <code>rrange</code></p></li>
-    <li><p>Set a value by index:<code>lset recipes:salad 3 "Add more cheese"</code></p></li>
+    <li><p>Set a value by index: <code>lset recipes:salad 3 "Add more cheese"</code></p></li>
   </ul>
 </section>
 
@@ -315,6 +315,17 @@ end</code></pre>
   <p>Find if a user is targetted with <code>SISMEMBER target:bacon <user-id></code></p>
   <p>Target a new member with <code>SADD target:bacon <user-id></code></p>
   <p>Untarget a new member with <code>SREM target:bacon <user-id></code></p>
+  <p>Grab a random user with <code>SRANDMEMBER target:bacon</code></p>
+</section>
+<section class="slide">
+  <h2>Sets in the wild</h2>
+  <h3>Real time targetting service</h3>
+  <p>But <em>we can do better</em></p>
+  <p>Instead, create sets for each targetting group</p>
+<pre><code>SADD target:nonvegetarian user1 user2 user3 ...
+SADD target:ages:21.40 user2 user4 user5 ...
+SADD target:region:midewest user1 user2 user3 user6 ...
+SINTER target:nonvegetarian target:ages:21.40 target:region:midwest</code></pre>
 </section>
 
 <section class="slide title">
