@@ -246,6 +246,29 @@ ids    = REDIS[ LRANGE projects:123:exceptions 0, 19 ]
 errors = SQL[ SELECT * FROM errors WHERE id IN ($ids) ORDER BY created_at DESC; ]</code></pre>
 </section>
 
+<section class="slide">
+  <h2>Lists in the wild</h2>
+  <h3>Counter of API hits over past 24 hours</h3>
+  <pre><code>def access
+  REDIS[ INCR "c:123" ]
+  REDIS[ SET "t:123" $current_timestamp ])
+end
+# account 123 hits our API
+def hit
+  if current_time.hour != last_access.hour
+    count = REDIS[ GET c:123 ]
+    REDIS[ LPUSH h:123 $count ]
+    delta = # calculate number of hours
+            # since API was last hit by this account
+            # using t:123 or defaulting to current hour
+    delta.times { REDIS[ LPUSH h:123 0 ] }
+    REDIS[ LTRIM h:123 0, 23 ]
+    REDIS[ DEL c:123 ]
+  end
+  access
+end</code></pre>
+</section>
+
 <section class="slide title">
   <h1>Sets</h1>
 </section>
@@ -380,6 +403,18 @@ HMGET api:users:123 timestamp1 timestamp2 ... timestamp7</pre></code>
   <pre><code>SORT api:users BY api:users:*->8713987142 DESC GET # GET api:users:*->8713987142 LIMIT 0 5</code></pre>
 </section>
 
+<section class="slide">
+  <h2>Hashes in the wild</h2>
+  <h3>Reducing I/O and processing with a project cache</h3>
+  <p>When a project hits our API, we need to check a few things.</p>
+  <p>Can they use SSL? Is their project active? What's their rate limit? and more</p>
+  <pre><code>HMSET cache:project:123 ssl 1 act 1 rl 60 </pre></code>
+  <p>When project 123 hits our API, load this fast cache from redis and respond quickly</p>
+<pre><code>if REDIS[ HGET cache:project:123 ssl ] != '1'
+  http_response 403, "Your plan does not support SSL. Please ask your admin to move your account to an SSL plan.", 403
+end</code></pre>
+</section>
+
 <section class="slide title">
   <h1>Expiration</h1>
 </section>
@@ -457,9 +492,9 @@ REDIS[
 </section>
 
 <section class="slide">
-  <h2>Multi/Exec in the wild</h2>
-  <h3>Global errors on Airbrake</h3>
-  <p>Some errors are global and are grouped as such</p>
+  <h2>Multi/Exec (with Sets) in the wild</h2>
+  <h3>Global errors</h3>
+  <p>Some errors are global and are grouped together</p>
   <p>User defines global errors and we store those on redis</p>
   <pre><code>multi
 del project:135:globals
