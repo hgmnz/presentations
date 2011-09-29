@@ -362,14 +362,12 @@ ZINCRBY downloads:today 1 rake-0.9.1</code></pre>
   <p>Clean up on a daily cron job</p>
 <pre><code>REDIS[ RENAME downloads:today downloads:yesterday ]
 keys = REDIS[ ZRANGE downloads:yesterday 0 -1 ]
-each key in keys do
-  version   = SQL[ SELECT * FROM versions WHERE name = $key; ]
+keys.each do |key|
+  version   = SQL[ SELECT * FROM versions WHERE name = E'$key'; ]
   downloads = REDIS[ ZSCORE downloads:yesterday key ]
-  REDIS[ HINCRBY downloads:version_daily:`version.full_name` Date.today downloads ]
-  REDIS[ HINCRBY downloads:rubygem_daily:`version.rubygem_name` Date.today downloads ]
+  SQL [ INSERT INTO downloads ... ]
 end</code></pre>
 </section>
-
 
 <section class="slide title">
   <h1>Hashes</h1>
