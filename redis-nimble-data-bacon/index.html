@@ -58,6 +58,7 @@
     <li><p>Server side operations and queries</p></li>
     <li><p>Single threaded</p></li>
     <li><p>Open Source (BSD based license), with sponsorship from VMWare</p></li>
+    <li><p>Fast!</li></p>
   </ul>
 </section>
 
@@ -92,6 +93,10 @@
     </li>
     <li><p>Very simple to configure: set <code>slaveof [ip address] [port]</code></p></li>
   </ul>
+</section>
+
+<section class="slide">
+  <h2>Replication</h2>
   <h3>Common uses</h3>
   <ul>
     <li><p>Failover</p></li>
@@ -121,6 +126,10 @@
   </ul>
 </section>
 
+<section class="slide title">
+  <h1>Strings</h1>
+</section>
+
 <section class="slide">
   <h2>Strings</h2>
   <ul>
@@ -136,29 +145,37 @@
 <section class="slide">
   <h2>Strings in the wild</h2>
   <h3>Disable application features</h3>
-    <p>Enable twitter integration</p>
-    <pre><code>INC features:twitter</code></pre>
-    <p>Application code checks for <code>features:twitter</code> before using feature</p>
-    <pre><code>if Feature.enabled?(:twitter)
-  # perform twitter integration
+    <p>Enable credit card processing gateway</p>
+    <pre><code>INC features:payment_gateway</code></pre>
+    <p>Application code checks for <code>features:payment_gateway</code> before using feature</p>
+    <pre><code>if Feature.enabled?(:payment_gateway)
+  # Perform payment, eat bacon
 end</code></pre>
-    <p>Auto remove <code>features:twitter</code> when related exception caught.</p>
+</section>
+<section class="slide">
+  <h2>Strings in the wild</h2>
+  <h3>Disable application features</h3>
+    <p>Auto remove <code>features:payment_gateway</code> when related exception caught.</p>
     <pre><code>begin
-  user.fetch_twitter_feed
+  subscription.charge!
 rescue
-  (DEL features:twitter)
+  REDIS[ DEL features:payemnt_gateway ]
 end</code></pre>
   </ul>
 </section>
 
 <section class="slide">
   <h2><strike>Strings</strike> Integers in the wild</h2>
-  <h3>Case study: number or errors per group</h3>
+  <h3>Case study: number of errors per group</h3>
   <p>Keeping counters in main DB became very expensive</p>
   <pre><code>INSERT INTO errors (group_id, message) VALUES (123, E'method not defined');
 UPDATE groups SET error_count = error_count + 1 where id = 123;</code></pre>
   <p>Instead store in Redis, one less SQL statement per API request, smaller SQL transactions</p>
   <pre><code>INCR group:123:error.count</code></pre>
+</section>
+
+<section class="slide title">
+  <h1>Lists</h1>
 </section>
 
 <section class="slide">
@@ -212,10 +229,14 @@ send subscription email to user</code></pre>
   <h2>Lists in the wild</h2>
   <h3>Caching most recent/most likely viewable data</h3>
   <p>SQL alone can be a scalability problem, instead let's keep references to recent data in redis</p>
-  <pre><code>LPUSH project:123:exceptions 532
-LTRIM project:123:exceptions 0 100
-ids    = LRANGE projects:123:exceptions 0, 19
-errors = SELECT * FROM errors WHERE id IN ($ids) ORDER BY created_at DESC;</code></pre>
+  <pre><code>REDIS[ LPUSH project:123:exceptions 532 ]
+REDIS[ LTRIM project:123:exceptions 0 100 ]
+ids    = REDIS[ LRANGE projects:123:exceptions 0, 19 ]
+errors = SQL[ SELECT * FROM errors WHERE id IN ($ids) ORDER BY created_at DESC; ]</code></pre>
+</section>
+
+<section class="slide title">
+  <h1>Sets</h1>
 </section>
 
 <section class="slide">
@@ -242,10 +263,17 @@ SMEMBERS best_bacon
   <!-- TODO -->
 </section>
 
+<section class="slide title">
+  <h1>Sorted Sets</h1>
+</section>
+
 <section class="slide">
   <h2>Sorted Sets</h2>
   <ul>
     <li>Each member also has a score, used for ranking or indexing</li>
+  </ul>
+  <p>Answer questions such as</p>
+  <ul>
     <li>What are the most visited pages on the site?</li>
     <li>Which users have spent the most dollars?</li>
     <li>Which products have been downloaded the most today?</li>
@@ -253,8 +281,8 @@ SMEMBERS best_bacon
 </section>
 
 <section class="slide">
-  <h2>Sorted Set example</h2>
-  <h3>Git commits</h3>
+  <h2>Fun with Sorted Sets</h2>
+  <h3>PostgreSQL git commits</h3>
   <p>Which hackers have made most commits to PostgreSQL in the last twelve weeks?</p>
   <pre><code>git shortlog -ns --since="12 weeks ago" | \
   awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | \
@@ -275,6 +303,10 @@ redis-cli zrange pgcommits -5 -1
   <h2>Sorted Sets in the wild</h2>
   <h3>Case study - downloads count on rubygems.org</h3>
   <!-- TODO -->
+</section>
+
+<section class="slide title">
+  <h1>Hashes</h1>
 </section>
 
 <section class="slide">
@@ -305,6 +337,10 @@ HMGET api:users:123 timestamp1 timestamp2 ... timestamp7</pre></code>
   <pre><code>SORT api:users BY api:users:*->8713987142 DESC GET # GET api:users:*->8713987142 LIMIT 0 5</code></pre>
 </section>
 
+<section class="slide title">
+  <h1>Expiration</h1>
+</section>
+
 <section class="slide">
   <h2>Expiration</h2>
   <ul>
@@ -313,7 +349,7 @@ HMGET api:users:123 timestamp1 timestamp2 ... timestamp7</pre></code>
     <li><p><code>EXPIRE key 60</code> will expire the key</li>
     <li><p><code>SETEXP key 60 value</code> equivalent of the two above commands in a transaction</li>
     <li><p><code>PERSIST</code> removes expiration from a key</li>
-    <li><p><code>TTL key</code> tells you the remaining time to live</li>
+    <li><p><code>TTL key</code> returns you the remaining time to live</li>
   </ul>
 </section>
 
@@ -334,18 +370,22 @@ EXPIRE api:users:top 3600</code></pre>
   <h3>Rate limiting</h3>
   <p>Goal: Only allow MAX_ALLOWED API hits a minute per account</p>
   <pre><code># project 123 hits your API
-if !(exists project:123:hits) {
-  (setex project:123:hits, 60, 0)
+if !(REDIS[ EXISTS project:123:hits ]) {
+  REDIS[ SETEX project:123:hits, 60, 0 ]
 }
-incr project:123:hits
-project:123:hits > MAX_ALLOWED
+REDIS[ incr project:123:hits ]
+REDIS[ project:123:hits ] > MAX_ALLOWED
 </code></pre>
+</section>
+
+<section class="slide title">
+  <h1>Multi/Exec</h1>
 </section>
 
 <section class="slide">
   <h2>Multi/Exec</h2>
   <ul>
-    <li><p>Allows transactional behavior in Redis</p></li>
+    <li><p>Transactional/atomic behavior in Redis</p></li>
     <li><p>Multiple commands guaranteed to run sequentially</p></li>
     <li><p>No other clients get served during a multi/exec block</p></li>
   </ul>
@@ -363,12 +403,12 @@ EXEC</code></pre>
     <li><p>But what about when the data you want to write depends on stored data</p></li>
     <li><p><code>WATCH</code> the key to implement optimistic locking</p></li>
   </ul>
-  <pre><code>WATCH user:123:ranking
-rank     = GET user:123:ranking
+  <pre><code>REDIS[ WATCH user:123:ranking ]
+rank     = REDIS[ GET user:123:ranking ]
 new_rank = some calculation using rank
-MULTI
+REDIS[ MULTI
 SET user:123:ranking $new_rank
-EXEC</code></pre>
+EXEC ]</code></pre>
 </section>
 
 <section class="slide">
@@ -419,7 +459,7 @@ sismember project:135:globals 'Null Bacon Exception' # false</code></pre>
   </ul>
 </section>
 
-<section class="slide">
+<section class="slide title">
   <h1>thanks</h1>
 </section>
 
