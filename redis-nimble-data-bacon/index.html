@@ -379,8 +379,7 @@ end</code></pre>
   <h2>Hashes in the wild</h2>
   <h3>Real-time storing events (page views, API hits) over time</h3>
   <p>When a user hits our API</p>
-  <pre><code>SADD api:users 123
-HINCRBY api:users:123 "total" 1
+  <pre><code> HINCRBY api:users:123 "total" 1
 HINCRBY api:users:123 8713987142 1 # store a timestamp corresponding to the day
 </code></pre>
   <p>Retreiving prior 7 days worth of data</p>
