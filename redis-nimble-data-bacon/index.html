@@ -243,7 +243,6 @@ send subscription email to user</code></pre>
 <section class="slide">
   <h2>Lists in the wild</h2>
   <h3>Caching most likely viewable data</h3>
-  <p>SQL alone can introduce a scalability problem, instead let's keep references to recent data in redis</p>
   <pre><code>REDIS[ LPUSH project:123:errors 532 ]
 REDIS[ LTRIM project:123:errors 0 100 ]
 ids    = REDIS[ LRANGE projects:123:errors 0, 19 ]
@@ -253,7 +252,7 @@ errors = SQL[ SELECT * FROM errors WHERE id IN ($ids) ORDER BY created_at DESC; 
 <section class="slide">
   <h2>Lists in the wild</h2>
   <h3>Counter of API hits over past 24 hours</h3>
-  <pre><code>def access
+  <pre><code>def record_access
   REDIS[ INCR "c:123" ]
   REDIS[ SET "t:123" $current_timestamp ])
 end
@@ -269,7 +268,7 @@ def hit
     REDIS[ LTRIM h:123 0, 23 ]
     REDIS[ DEL c:123 ]
   end
-  access
+  record_access
 end</code></pre>
 </section>
 
@@ -319,15 +318,17 @@ WHERE EXTRACT('year' from AGE(CURRENT_TIMESTAMP, demographics.date_of_birth)) be
 <section class="slide">
   <h2>Sets in the wild</h2>
   <h3>Real time targetting service</h3>
-  <p>Solution: prepopulate a cache in redis with a background worker, have it immediately available</p>
+  <p>Solution: prepopulate a cache in redis with a background worker, have it immediately available. Keep it updated as data comes into the system.</p>
   <pre><code># find each user id
 REDIS[ SADD target:bacon user2 user3 ]
 </code></pre>
-  <p>Grab targetted users with <code>SMEMBERS target:bacon</code></p>
-  <p>Find if a user is targetted with <code>SISMEMBER target:bacon user5</code></p>
-  <p>Target a new member with <code>SADD target:bacon user8</code></p>
-  <p>Untarget a new member with <code>SREM target:bacon user5</code></p>
-  <p>Grab a random user with <code>SRANDMEMBER target:bacon</code></p>
+  <ul>
+    <li><p>Grab targetted users with <code>SMEMBERS target:bacon</code></p></li>
+    <li><p>Find if a user is targetted with <code>SISMEMBER target:bacon user5</code></p></li>
+    <li><p>Target a new member with <code>SADD target:bacon user8</code></p></li>
+    <li><p>Untarget a new member with <code>SREM target:bacon user5</code></p></li>
+    <li><p>Grab a random user with <code>SRANDMEMBER target:bacon</code></p></li>
+  </ul>
 </section>
 
 <section class="slide">
@@ -347,7 +348,8 @@ SADD target:region:midewest user1 user2 user3 user6 ...</code></pre>
   <p>And intersect them</p>
   <img src="targetting-sinter.png" />
   <pre><code>SINTER target:nonvegetarian target:ages:21.40 target:region:midwest
- => user2 user3</code></pre>
+1) user2
+2) user3</code></pre>
 </section>
 
 <section class="slide title">
@@ -374,16 +376,18 @@ SADD target:region:midewest user1 user2 user3 user6 ...</code></pre>
   <pre><code>git shortlog -ns --since="12 weeks ago" | \
   awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | \
   sh
-redis-cli zrevrange pgcommits -5 -1
-1) "Heikki Linnakangas"
+redis-cli ZREVRANGE pgcommits 0 4
+1) "Tom Lane"
+2) "Bruce Momjian"
+3) "Robert Haas"
+4) "Peter Eisentraut"
+5) "Heikki Linnakangas"</code></pre>
+  <p>Which made more than 50 commits?</p>
+    <pre><code>ZRANGEBYSCORE pgcommits (50 inf
+1) "Peter Eisentraut"
 2) "Robert Haas"
-3) "Peter Eisentraut"
-4) "Bruce Momjian"
-5) "Tom Lane"</code></pre>
-  <p>Which made more than 75 commits?</p>
-    <pre><code>redis-cli zrangebyscore pgcommits 75 inf
-1) "Bruce Momjian"
-2) "Tom Lane"</code></pre>
+3) "Bruce Momjian"
+4) "Tom Lane"</code></pre>
 </section>
 
 <section class="slide">
