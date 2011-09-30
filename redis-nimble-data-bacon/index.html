@@ -169,6 +169,12 @@ end</code></pre>
 <section class="slide">
   <h2><strike>Strings</strike> Integers in the wild</h2>
   <h3>Case study: number of errors per group</h3>
+  <img src="airbrake-group-count.jpg" />
+</section>
+
+<section class="slide">
+  <h2><strike>Strings</strike> Integers in the wild</h2>
+  <h3>Case study: number of errors per group</h3>
   <p>Keeping counters in main DB became very expensive</p>
   <pre><code>INSERT INTO errors (group_id, message) VALUES (123, E'method not defined');
 UPDATE groups SET error_count = error_count + 1 where id = 123;</code></pre>
