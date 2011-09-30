@@ -548,18 +548,6 @@ sismember project:135:globals 'Null Bacon Exception' # false</code></pre>
 </section>
 
 <section class="slide">
-  <h2>Pub/Sub</h2>
-  <ul>
-    <li><p>Native support for Publish/Subscribe pattern.</p></li>
-    <li><p><code>PUBLISH chat:bacon.talk "I'm hungry!"</code>publishes to bacon talk channel</p></li>
-    <li><p><code>SUBSCRIBE chat:bacon.talk</code>subscribes to bacon talk channel</p></li>
-    <li><p><code>UNSUBSCRIBE chat:bacon.talk</code>unsubscribes from bacon talk channel</p></li>
-    <li><p><code>PSUBSCRIBE chat:bacon*</code>subscribes to all channels about bacon</p></li>
-    <li><p><code>PUNSUBSCRIBE chat:onion*</code>unsubscribes from all channels about onion</p></li>
-  </ul>
-</section>
-
-<section class="slide">
   <h2>Outro</h2>
   <ul>
     <li><p>many other commands available, go to <a href="http://redis.io">redis.io</a></p></li>
@@ -571,6 +559,7 @@ sismember project:135:globals 'Null Bacon Exception' # false</code></pre>
               <a href="https://github.com/ezmobius/redis-rb">ruby</a> and
               <a href="http://redis.io/clients">more</a>.</p></li>
     <li><p>Try redis on your browser: <a href="http://try.redis-db.com/">try.redis-db.com</a></p></li>
+    <li><p>More topics: PUB/SUB, many more operations, pipelining</p></li>
     <li><p>Be creative, new ways to model data and operate on it</p></li>
   </ul>
   <h3>Coming soon to Redis</h3>
