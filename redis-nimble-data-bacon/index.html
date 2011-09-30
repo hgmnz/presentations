@@ -530,7 +530,12 @@ REDIS[
 <section class="slide">
   <h2>Multi/Exec (with Sets) in the wild</h2>
   <h3>Global errors</h3>
-  <p>Some errors are global and are grouped together</p>
+  <img src="airbrake-global-errors.jpg" />
+</section>
+
+<section class="slide">
+  <h2>Multi/Exec (with Sets) in the wild</h2>
+  <h3>Global errors</h3>
   <p>User defines global errors and we store those on redis</p>
   <pre><code>multi
 del project:135:globals
