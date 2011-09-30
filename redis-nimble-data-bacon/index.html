@@ -447,21 +447,6 @@ end</code></pre>
 
 <section class="slide">
   <h2>Hashes in the wild</h2>
-  <h3>Real-time storing events (page views, API hits) over time</h3>
-  <p>When a user hits our API</p>
-  <pre><code>HINCRBY api:users:123 "total" 1
-HINCRBY api:users:123 8713987142 1 # store a timestamp corresponding to the day
-</code></pre>
-  <p>Retreiving prior 7 days worth of data</p>
-<pre><code># produce timestamps corresponding to prior 7 days
-HMGET api:users:123 timestamp1 timestamp2 ... timestamp7</pre></code>
-  <p>Store anything prior to that in PostgreSQL warehouse. Either manually delete, or set expiry on older data</p>
-  <p>Retrieve heavy users in the past hour</p>
-  <pre><code>SORT api:users BY api:users:*->8713987142 DESC GET # GET api:users:*->8713987142 LIMIT 0 5</code></pre>
-</section>
-
-<section class="slide">
-  <h2>Hashes in the wild</h2>
   <h3>Reducing I/O and processing with a project cache</h3>
   <p>When a project hits our API, we need to check a few things.</p>
   <p>Can they use SSL? Is their project active? What's their rate limit? and more</p>
@@ -486,18 +471,6 @@ end</code></pre>
     <li><p><code>PERSIST</code> removes expiration from a key</li>
     <li><p><code>TTL key</code> returns you the remaining time to live</li>
   </ul>
-</section>
-
-<section class="slide">
-  <h2>Expiration in the wild</h2>
-  <h3>Expiring caches</h3>
-  <p>Back to our previous example: When calculating data, check the cache first</p>
-  <pre><code>lrange api:users:top 60 0 -1</code></pre>
-  <p>Doesn't exist? Calculate and cache it for an hour</p>
-  <pre><code>SORT api:users BY api:users:*->8713987142 DESC \
-  GET # GET api:users:*->8713987142 LIMIT 0 5 \
-  STORE api:users:top
-EXPIRE api:users:top 3600</code></pre>
 </section>
 
 <section class="slide">
