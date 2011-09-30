@@ -459,7 +459,7 @@ end</code></pre>
   <pre><code>HMSET cache:project:123 ssl 1 act 1 rl 60 </pre></code>
   <p>When project 123 hits our API, load this fast cache from redis and respond quickly</p>
 <pre><code>if REDIS[ HGET cache:project:123 ssl ] != '1'
-  http_response 403, "Your plan does not support SSL. Please ask your admin to move your account to an SSL plan."
+  http_response 403, "Your plan does not support SSL."
 end</code></pre>
 </section>
 
