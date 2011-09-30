@@ -230,11 +230,17 @@ send subscription email to user</code></pre>
 
 <section class="slide">
   <h2>Lists in the wild</h2>
-  <h3>Caching most recent/most likely viewable data</h3>
+  <h3>Caching most likely viewable data</h3>
+  <img src="cache-most-likely-viewable.jpg" />
+</section>
+
+<section class="slide">
+  <h2>Lists in the wild</h2>
+  <h3>Caching most likely viewable data</h3>
   <p>SQL alone can introduce a scalability problem, instead let's keep references to recent data in redis</p>
-  <pre><code>REDIS[ LPUSH project:123:exceptions 532 ]
-REDIS[ LTRIM project:123:exceptions 0 100 ]
-ids    = REDIS[ LRANGE projects:123:exceptions 0, 19 ]
+  <pre><code>REDIS[ LPUSH project:123:errors 532 ]
+REDIS[ LTRIM project:123:errors 0 100 ]
+ids    = REDIS[ LRANGE projects:123:errors 0, 19 ]
 errors = SQL[ SELECT * FROM errors WHERE id IN ($ids) ORDER BY created_at DESC; ]</code></pre>
 </section>
 
