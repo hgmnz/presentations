@@ -63,7 +63,7 @@
 
 <section class="slide">
   <h2>Not Only SQL</h2>
-  <img src="postgres-and-redis.jpg" />
+  <img src="images/postgres-and-redis.jpg" />
 </section>
 
 <section class="slide">
@@ -176,7 +176,7 @@ end</code></pre>
 <section class="slide">
   <h2><strike>Strings</strike> Integers in the wild</h2>
   <h3>Case study: number of errors per group</h3>
-  <img src="airbrake-group-count.jpg" />
+  <img src="images/airbrake-group-count.jpg" />
 </section>
 
 <section class="slide">
@@ -234,7 +234,7 @@ LRANGE recipes:salad 0 3
   <p>Got a new job? place it on the queue</p>
   <pre><code>RPUSH queue:email.subscribed 632
 RPUSH queue:email.subscribed 523</code></pre>
-  <img src="queue.png" />
+  <img src="images/queue.png" />
   <pre><code>REDIS[ BLPOP queue:email.subscribed ]
 SQL[ SELECT * FROM users WHERE id = $1; ]
 send subscription email to user</code></pre>
@@ -244,7 +244,7 @@ send subscription email to user</code></pre>
 <section class="slide">
   <h2>Lists in the wild</h2>
   <h3>Caching most likely viewable data</h3>
-  <img src="cache-most-likely-viewable.jpg" />
+  <img src="images/cache-most-likely-viewable.jpg" />
 </section>
 
 <section class="slide">
@@ -343,7 +343,7 @@ REDIS[ SADD target:bacon user2 user3 ]
   <h3>Real time targetting service</h3>
   <p>But <em>we can do better</em></p>
   <p>Instead, create sets for each targetting group</p>
-  <img src="targetting-sets.png" />
+  <img src="images/targetting-sets.png" />
 <pre><code>SADD target:nonvegetarian user1 user2 user3 ...
 SADD target:ages:21.40 user2 user3 user4 user5 ...
 SADD target:region:midewest user1 user2 user3 user6 ...</code></pre>
@@ -353,7 +353,7 @@ SADD target:region:midewest user1 user2 user3 user6 ...</code></pre>
   <h2>Sets in the wild</h2>
   <h3>Real time targetting service</h3>
   <p>And intersect them</p>
-  <img src="targetting-sinter.png" />
+  <img src="images/targetting-sinter.png" />
   <pre><code>SINTER target:nonvegetarian target:ages:21.40 target:region:midwest
 1) user2
 2) user3</code></pre>
@@ -411,21 +411,21 @@ redis-cli ZREVRANGE pgcommits 0 4
 </section>
 
 <section class="slide full">
-  <img src="rubygems-downloads-home.png" />
+  <img src="images/rubygems-downloads-home.png" />
 </section>
 
 <section class="slide full">
-  <img src="rubygems-downloads-gem.png" />
+  <img src="images/rubygems-downloads-gem.png" />
 </section>
 
 <section class="slide full">
-  <img src="rubygems-downloads-stats.png" />
+  <img src="images/rubygems-downloads-stats.png" />
 </section>
 
 <section class="slide">
   <h2>Sorted Sets in the wild</h2>
   <p>When the rake 0.9.2 gem is installed:</p>
-  <img src="rubygems-downloads-zset.png" />
+  <img src="images/rubygems-downloads-zset.png" />
   <pre><code>INC downloads
 INC downloads:rubygems:rake
 INC downloads:version:rake-0.9.2
@@ -541,7 +541,7 @@ REDIS[
 <section class="slide">
   <h2>Multi/Exec (with Sets) in the wild</h2>
   <h3>Global errors</h3>
-  <img src="airbrake-global-errors.jpg" />
+  <img src="images/airbrake-global-errors.jpg" />
 </section>
 
 <section class="slide">

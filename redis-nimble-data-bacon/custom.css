@@ -1,18 +1,18 @@
 #who {
-  background: url('thoughtbot.png') no-repeat 70% 70%;
+  background: url('images/thoughtbot.png') no-repeat 70% 70%;
 }
 
 #radish {
-  background: url('radish.png') no-repeat 50% 0;
+  background: url('images/radish.png') no-repeat 50% 0;
 }
 
 #radish2 {
-  background: url('radish2.png') no-repeat 50% 0;
+  background: url('images/radish2.png') no-repeat 50% 0;
 }
 
 .bar {
   text-shadow:  0.2em 0.2em 0.4em black;
-  background: url('bar.jpg') no-repeat !important;
+  background: url('images/bar.jpg') no-repeat !important;
   background-size: 100% !important;
 }
 
