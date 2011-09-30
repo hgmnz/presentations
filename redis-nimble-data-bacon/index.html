@@ -396,11 +396,29 @@ redis-cli zrange pgcommits -5 -1
 <section class="slide">
   <h2>Sorted Sets in the wild</h2>
   <h3>Case study - downloads count on rubygems.org</h3>
-  <p>When the rake 0.9.1 is installed:</p>
+</section>
+
+<section class="slide full">
+  <img src="rubygems-downloads-home.png" />
+</section>
+
+<section class="slide full">
+  <img src="rubygems-downloads-gem.png" />
+</section>
+
+<section class="slide full">
+  <img src="rubygems-downloads-stats.png" />
+</section>
+
+<section class="slide">
+  <h2>Sorted Sets in the wild</h2>
+  <h3>Case study - downloads count on rubygems.org</h3>
+  <p>When the rake 0.9.2 gem is installed:</p>
+  <img src="rubygems-downloads-zset.png" />
   <pre><code>INC downloads
 INC downloads:rubygems:rake
-INC downloads:version:rake-0.9.1
-ZINCRBY downloads:today 1 rake-0.9.1</code></pre>
+INC downloads:version:rake-0.9.2
+ZINCRBY downloads:today 1 rake-0.9.2</code></pre>
 </section>
 
 <section class="slide">

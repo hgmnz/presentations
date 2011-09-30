@@ -10,6 +10,11 @@
   background: url('radish2.png') no-repeat 50% 0;
 }
 
+.full {
+  padding: 0 !important;
+  margin: auto !important;
+}
+
 pre, code {
   font-family: 'Anonymous Pro', 'Menlo', 'Bitstream Vera Sans Mono', 'Courier', monospace !important;
   font-weight: normal !important;
