@@ -368,7 +368,7 @@ SADD target:region:midewest user1 user2 user3 user6 ...</code></pre>
   <pre><code>git shortlog -ns --since="12 weeks ago" | \
   awk '{ print "redis-cli zadd pgcommits " $1 " \""$2 " " $3"\"" }' | \
   sh
-redis-cli zrange pgcommits -5 -1
+redis-cli zrevrange pgcommits -5 -1
 1) "Heikki Linnakangas"
 2) "Robert Haas"
 3) "Peter Eisentraut"
@@ -393,11 +393,6 @@ redis-cli zrange pgcommits -5 -1
   </ul>
 </section>
 
-<section class="slide">
-  <h2>Sorted Sets in the wild</h2>
-  <h3>Case study - downloads count on rubygems.org</h3>
-</section>
-
 <section class="slide full">
   <img src="rubygems-downloads-home.png" />
 </section>
@@ -412,13 +407,13 @@ redis-cli zrange pgcommits -5 -1
 
 <section class="slide">
   <h2>Sorted Sets in the wild</h2>
-  <h3>Case study - downloads count on rubygems.org</h3>
   <p>When the rake 0.9.2 gem is installed:</p>
   <img src="rubygems-downloads-zset.png" />
   <pre><code>INC downloads
 INC downloads:rubygems:rake
 INC downloads:version:rake-0.9.2
 ZINCRBY downloads:today 1 rake-0.9.2</code></pre>
+  <pre><code>ZREVRANGE downloads:today 0 4 WITHSCORES</code></pre>
 </section>
 
 <section class="slide">
@@ -454,7 +449,7 @@ end</code></pre>
   <h2>Hashes in the wild</h2>
   <h3>Real-time storing events (page views, API hits) over time</h3>
   <p>When a user hits our API</p>
-  <pre><code> HINCRBY api:users:123 "total" 1
+  <pre><code>HINCRBY api:users:123 "total" 1
 HINCRBY api:users:123 8713987142 1 # store a timestamp corresponding to the day
 </code></pre>
   <p>Retreiving prior 7 days worth of data</p>
