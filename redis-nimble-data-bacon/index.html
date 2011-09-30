@@ -204,14 +204,14 @@ LRANGE recipes:salad 0 3
 <section class="slide">
   <h2>List operations</h2>
   <ul>
-    <li><p>Get the length: <code>llen recipes:salad</code></p></li>
-    <li><p>Remove elements: <code>lrem recipes:salad 0 1</code></p></li>
-    <li><p>Operate on the left: <code>lpush</code>, <code>lpop</code>, <code>ltrim</code></p></li>
+    <li><p>Get the length: <code>LLEN recipes:salad</code></p></li>
+    <li><p>Remove elements: <code>LREM recipes:salad 0 1</code></p></li>
+    <li><p>Operate on the left: <code>LPUSH</code>, <code>LPOP</code>, <code>LTRIM</code></p></li>
     <li><p>Pop from the left, blocking: <code>blpop</code>
-    <li><p>Operate on the right: <code>rpush</code>, <code>rpop</code>, <code>rtrim</code></p></li>
-    <li><p>Pop from the right, blocking: <code>brpop</code>
-    <li><p>Grab a few elements: <code>lrange recipes:salad 0 -1</code>, or <code>rrange</code></p></li>
-    <li><p>Set a value by index: <code>lset recipes:salad 3 "Add more cheese"</code></p></li>
+    <li><p>Operate on the right: <code>RPUSH</code>, <code>RPOP</code>, <code>RTRIM</code></p></li>
+    <li><p>Pop from the right, blocking: <code>BRPOP</code>
+    <li><p>Grab a few elements: <code>LRANGE recipes:salad 0 -1</code>, or <code>RRANGE</code></p></li>
+    <li><p>Set a value by index: <code>LSET recipes:salad 3 "Add more cheese"</code></p></li>
   </ul>
 </section>
 
@@ -219,10 +219,11 @@ LRANGE recipes:salad 0 3
   <h2>Lists in the wild</h2>
   <h3>Queues</h3>
   <p>Got a new job? place it on the queue</p>
-  <pre><code>RPUSH queue:email.subscribed 632 #user id</code></pre>
-  <p>Spin up some workers, have them wait on the queue and do work</p>
-  <pre><code>BLPOP queue:email.subscribed
-SELECT * FROM users WHERE id = $1;
+  <pre><code>RPUSH queue:email.subscribed 632
+RPUSH queue:email.subscribed 523</code></pre>
+  <img src="queue.png" />
+  <pre><code>REDIS[ BLPOP queue:email.subscribed ]
+SQL[ SELECT * FROM users WHERE id = $1; ]
 send subscription email to user</code></pre>
   <p>Take a look at <a href="https://github.com/defunkt/resque/">resque</a></p>
 </section>
