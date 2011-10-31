@@ -1,0 +1,47 @@
+#who {
+  background: url('images/thoughtbot.png') no-repeat 70% 70%;
+}
+
+#radish {
+  background: url('images/radish.png') no-repeat 50% 0;
+}
+
+#radish2 {
+  background: url('images/radish2.png') no-repeat 50% 0;
+}
+
+.bar {
+  text-shadow:  0.2em 0.2em 0.4em black;
+  background: url('images/bar.jpg') no-repeat !important;
+  background-size: 100% !important;
+}
+
+.bar h1 {
+  color: #fafafa !important;
+}
+
+.full {
+  padding: 0 !important;
+  margin: auto !important;
+}
+
+pre, code {
+  font-family: 'Anonymous Pro', 'Menlo', 'Bitstream Vera Sans Mono', 'Courier', monospace !important;
+  font-weight: normal !important;
+}
+
+span.pass {
+  color: #60963b !important;
+}
+
+span.fail {
+  color: red !important;
+}
+
+section.image {
+  background: black !important;
+}
+
+section.image h2 {
+  color: white !important;
+}
