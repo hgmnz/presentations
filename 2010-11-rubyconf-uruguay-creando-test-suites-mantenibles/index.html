@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>Creando Test Suites Mantenibles</title>
+
+  <meta name="author"   content="Harold Giménez">
+  <!--<meta name="viewport" content="width=1024, user-scalable=no">-->
+
+  <!-- Core and extension CSS files -->
+  <link rel="stylesheet" href="../deckjs/core/deck.core.css">
+  <link rel="stylesheet" href="../deckjs/extensions/navigation/deck.navigation.css">
+
+  <!-- Theme CSS files (menu swaps these out) -->
+  <link rel="stylesheet" id="style-theme-link" href="../deckjs/themes/style/thoughtbot-workshops.css">
+  <link rel="stylesheet" href="./custom.css" type="text/css">
+  <!--<link rel="stylesheet" id="transition-theme-link" href="../deckjs/themes/transition/horizontal-slide.css">-->
+  <link rel="stylesheet" id="transition-theme-link" href="../deckjs/extensions/hash/deck.hash.css">
+
+  <script src="../deckjs/modernizr.custom.js"></script>
+</head>
+
+<body class="deck-container">
+
+<section class="slide title" id="title">
+  <h1>Creando Test Suites Mantenibles</h1>
+  <h4>BogotáConf - 31 de Octubre, 2011.</h4>
+  <h5>Harold Giménez - @hgimenez</h5>
+</section>
+
+<section class="slide" id="who">
+  <h2>¿Quién soy?</h2>
+  <ul>
+    <li><p>Desarrollador en thoughtbot</p></li>
+    <li><p>Consulting, Training, Productos</p></li>
+    <li><p>Enfoque en Ruby, Rails, Javascript.</p></li>
+    <li><p>Proceso, ágil y desarrollo de software de alta calidad, rápido.</p></li>
+    <li><p>Comunidad y Open Source</p></li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>¿Qué es un Test Suite mantenible?</h2>
+  <ul>
+    <li><p>Detector de bugs, previene regresiones</p></li>
+    <li><p>Facilita el Refactoring</p></li>
+    <li><p>Elimina todo tipo de comportamiento aleatorio</p></li>
+    <li><p>Independencia entre tests</p></li>
+    <li><p>Ejecutable sin conección de red</p></li>
+  </ul>
+</section>
+
+<section class="slide image">
+  <h2>El Plan</h2>
+  <img src="./images/dwight-plan.jpg" >
+</section>
+
+<section class="slide image">
+  <h2>No utilices generadores de data aleatoria</h2>
+  <img src="images/creed-random-data.jpg" >
+</section>
+
+<section class="slide">
+<p><strike>random-data</strike>, <strike>Faker</strike>, <strike>forgery</strike>
+<pre><code>user = User.create(password: Forger(:basic).password, email: Forgery(:basic).email)
+user.purchase!(item)
+user.should have_purchased(item)
+
+Finished in 0.0418 seconds
+<span class="pass">1 example, 0 failures</span>
+</code></pre>
+</section>
+
+<section class="slide">
+<p>Pasa un tiempo y necesitas mas restricciones con los passwords</p>
+<pre><code>class User
+  validates :password, length: { min: 8 }
+end</code></pre>
+</section>
+
+<section class="slide">
+<pre><code>user.purchase!(item)
+user.should have_purchased(item)
+Finished in 0.0223 seconds
+<span class="pass">1 example, 0 failures</span>
+</code></pre>
+</section>
+
+<section class="slide">
+<pre><code>user.purchase!(item)
+user.should have_purchased(item)
+Finished in 0.0223 seconds
+<span class="fail">1 example, 1 failure</span></code></pre>
+<pre><code>user.name
+  # => José
+user.name.length
+  # => 4</code></pre>
+</section>
+
+<section class="slide image">
+  <h2>FAIL</h2>
+  <img src="./images/everyone-fail.jpg" >
+</section>
+
+<section class="slide image">
+  <h2>Usa factories</h2>
+  <img src="./images/factories.jpg" >
+</section>
+
+<section class="slide">
+  <h2>Usa factories</h2>
+  <ul>
+    <li>Fixtures inmantenibles y lentos</li>
+    <li>Manten los setups a lo mínimo</li>
+    <li>Que revelen la intención del test</li>
+  </ul>
+</section>
+
+<section class="slide image">
+<h2><a href="http://github.com/thoughtbot/factory_girl">FactoryGirl</a></h2>
+<img src="./images/pam-factory-girl.jpg" >
+</section>
+
+<section class="slide">
+  <h2>Usa factories</h2>
+<pre><code>subject do
+  User.create(email:                 'user@example.com',
+              password:              'password',
+              password_confirmation: 'password',
+              date_of_birth:         '01-13-1983')
+end
+
+its(:age) { should == 27 }
+</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Usa factories</h2>
+<pre><code>subject do
+  User.create(<span>email:                 'user@example.com',
+              password:              'password',
+              password_confirmation: 'password'</span>,
+              date_of_birth:         '01-13-1983')
+end
+
+its(:age) { should == 27 }
+</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Usa factories</h2>
+  <p><code>spec/factories.rb</code></p>
+<pre><code><span>FactoryGirl.define do
+  factory :user do
+    email
+    password 'password'
+  end
+end</span></code></pre>
+
+  <p><code>spec/models/user_spec.rb</code></p>
+<pre><code>subject { create(:user, <span>date_of_birth: '02-03-1983'</span>) }
+its(:age) { should == 27 }
+</code></pre>
+</section>
+
+<section class="slide image">
+  <h2>No sobre-especificar</h2>
+  <img src="./images/michael-overspecify.jpg" >
+</section>
+
+<section class="slide">
+  <h2>No sobre-especificar</h2>
+  <ul>
+    <li>No digas cómo, sino qué</li>
+    <li>No crear stubs en el SUT</li>
+    <li>Complica hacer refactoring</li>
+    <li>Señal de violaciones del Single Responsability Principle, Law of Demeter</li>
+    <li>Traza la linea</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>No digas cómo, sino qué</h2>
+<pre><code>class User
+  def card_number
+    fetch_credit_card.number
+  end
+
+  def fetch_credit_card
+    card = Net::HTTP.new('https://gateway.com').get("/cards/#{self.remote_id}")
+    CreditCard.new(card['data'])
+  end
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>No digas cómo, sino qué</h2>
+<pre><code>describe User, '#card_number' do
+  subject { create(:user) }
+  it "returns the user's credit card" do
+    mock_http = stub
+    mock_http.stubs(get: { number: 1234 })
+    Net::HTTP.stubs(new: mock_http)
+    subject.card_number.should == '1234'
+  end
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>No digas cómo, sino qué</h2>
+<pre><code>describe User, '#card_number' do
+  subject { create(:user) }
+  it "returns the user's credit card" do
+    <span>mock_http = stub
+    mock_http.stubs(get: { number: 1234 })
+    Net::HTTP.stubs(new: mock_http)</span>
+    subject.card_number.should == '1234'
+  end
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Stubs en el SUT</h2>
+<pre><code>describe User, '#card_number' do
+  subject { create(:user) }
+  it "returns the user's credit card" do
+    card = CreditCard.new(number: '1234')
+    subject.stubs(fetch_credit_card: card)
+    subject.card_number.should be == '1234'
+  end
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Stubs en el SUT</h2>
+<pre><code>describe User, '#card_number' do
+  subject { create(:user) }
+  it "returns the user's credit card" do
+    card = CreditCard.new(number: '1234')
+    <span>subject.stubs(fetch_credit_card: card)</span>
+    subject.card_number.should be == '1234'
+  end
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Stubs en el SUT</h2>
+<pre><code>describe User, '#card_number' do
+  subject { create(:user) }
+  it "returns the user's credit card" do
+    <span>fake_card = stub(number: '1234')
+    CreditCard.stubs(new: fake_card)</span>
+    subject.card_number.should be == '1234'
+  end
+end </code></pre>
+</section>
+
+<section class="slide">
+  <h2>Usa Inyección de Dependencias</h2>
+<pre><code>class User
+  def card_number
+    fetch_credit_card.number
+  end
+
+  def fetch_credit_card
+    CreditCard.new(user: self).fetch
+  end
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Usa Inyección de Dependencias</h2>
+<pre><code>class User
+  def card_number
+    fetch_credit_card.number
+  end
+
+  def fetch_credit_card
+    <span>credit_card_fetcher</span>.new(user: self).find
+  end
+
+  <span>def credit_card_fetcher
+    @fetcher ||= CreditCard
+  end</span>
+
+  <span>def credit_card_fetcher=(fetcher_class)
+    @fetcher = fetcher_class
+  end</span>
+end</code></pre>
+</section>
+
+
+<section class="slide">
+  <h2>Usa Inyección de Dependencias</h2>
+<pre><code>describe User, '#card_number' do
+  class FakeCreditCard
+    def initialize(user); end
+    def fetch
+      CreditCard.new(number: '1234')
+    end
+  end
+
+  subject { create(:user) }
+  before { subject.credit_card_fetcher = FakeCreditCard }
+  it "returns the user's card number" do
+    subject.card_number.should be == '1234'
+  end
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Usa Inyección de Dependencias</h2>
+<pre><code>describe User, '#card_number' do
+  <span>class FakeCreditCard
+    def initialize(user); end
+    def fetch
+      CreditCard.new(number: '1234')
+    end
+  end</span>
+
+  subject { create(:user) }
+  before { <span>subject.credit_card_fetcher = FakeCreditCard</span> }
+  it "returns the user's card number" do
+    subject.card_number.should be == '1234'
+  end
+end</code></pre>
+</section>
+
+<section class="slide image">
+  <h2>No dependas del tiempo</h2>
+  <img src="images/time.jpg" >
+</section>
+
+
+<section class="slide">
+  <h2>No dependas del tiempo</h2>
+  <ul>
+    <li>Muy fácil crear tests que pasan en la mañana y no en la tarde</li>
+    <li>Muy fácil crear tests que pasan ahora, pero no cuando cambia el DST.</li>
+    <li>Muy fácil crear tests que pasan en tu computador, pero no en CI.</li>
+    <li>Tiempo del servidor distinto al cliente: tests para Javascript se complican</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>No dependas del tiempo</h2>
+<pre><code>let(:article) { build(:article) }
+before { article.publish! }
+it 'displays the published date and time' do
+  assigns[:article] = article
+  render
+  response.should contain("Published at #{Time.now.to_s}")
+end
+<span class="pass">.</span>
+Finished in 0.1428 seconds
+<span class="pass">1 example, 0 failures</span>
+</code></pre>
+</section>
+
+<section class="slide">
+  <h2>No dependas del tiempo</h2>
+<pre><code>let(:article) { build(:article) }
+before { article.publish! }
+it 'displays the published date and time' do
+  assigns[:article] = article
+  render
+  response.should contain("Published at #{<span>Time.now.to_s</span>}")
+end
+<span class="fail">F</span>
+Finished in 0.1234 seconds
+<span class="fail">1 example, 1 failure</span></code></pre>
+</section>
+
+<section class="slide">
+  <h2>No dependas del tiempo</h2>
+  <p>Solución 1: Timecop</p>
+<pre><code>let(:article) { build(:article) }
+before do
+  <span>Timecop.freeze</span>
+  article.publish!
+end
+after { <span>Timecop.return</span> }
+it 'displays the published date and time' do
+  assigns[:article] = article
+  render
+  response.should contain("Published at #{Time.now.to_s}")
+end
+<span class="pass">.</span>
+Finished in 0.0981 seconds
+<span class="pass">1 example, 0 failures</span></code></pre>
+</section>
+
+<section class="slide">
+  <h2>No dependas del tiempo</h2>
+  <p>Solución 2: parametizar tiempo de publicación</p>
+<pre><code>class Article
+  def publish(<span>time = Time.now</span>)
+    update_attributes(published: true, published_at: <span>time</span>)
+  end
+end
+let(:article) { build(:article) }
+<span>let(:publish_time) { Time.now }</span>
+before { article.publish!(publish_time) }
+it 'displays the published date and time' do
+  assigns[:article] = article
+  render
+  response.should contain("Published at #{<span>publish_time</span>.to_s}")
+end
+<span class="pass">.</span>
+Finished in 0.0981 seconds
+<span class="pass">1 example, 0 failures</span></code></pre>
+</section>
+
+<section class="slide">
+  <h2>No dependas del tiempo</h2>
+  <p>Javascript: forzar la hora del servidor en el cliente</p>
+  <p>Ejemplo en Rails:</p>
+<pre><code><%= javascript_tag do -%>
+  Date.currentDate = function() {
+    <% if Rails.env.test? -%>
+      <span>return new Date(<%== Time.now.to_json %>)</span>;
+    <% else -%>
+      return new Date();
+    <% end -%>
+  };
+<% end -%></code></pre>
+  <p>Luego ser juiciozo con siempre utilizar <code>Date.currentDate()</code> en lugar de <code>new Date()</code>
+</section>
+
+<section class="slide image">
+  <h2>No Duermas</h2>
+  <img src="./images/michael-dweight-sleep.jpg" >
+</section>
+
+<section class="slide">
+  <h2>No Duermas para tests de código asincrónico</h2>
+  <p>Comportamiento asincrónico como Ajax es complicado de testear</p>
+  <p>Cómo NO testearlo:</p>
+<pre><code>make_call()
+sleep(5)
+check_response()
+</code></pre>
+  <p>Si el response es en 1 segundo, tu suite pierde 4 segundos esperando</p>
+  <p>Peor aun, si el response es en 6 segundos, tienes un falso negativo.</p>
+</section>
+
+<section class="slide">
+  <h2>No Duermas para tests de código asincrónico</h2>
+  <p>Ejemplo con capybara</p>
+<pre><code>before do
+  create(:album, title: 'Dark side of the moon')
+  create(:album, title: 'Dark Magus')
+  create(:album, title: 'Jimi: Blues')
+end
+
+visit '/search'
+fill_in 'Search', with: 'Dark'
+click_button 'Submit'
+sleep(5)
+page.should have_content('Dark side of the moon')
+page.should have_content('Dark Magus')
+page.should have_no_content('Jimi: Blues')
+</code></pre>
+</section>
+
+<section class="slide">
+  <h2>No Duermas para tests de código asincrónico</h2>
+<pre><code>before do
+  create(:album, title: 'Dark side of the moon')
+  create(:album, title: 'Dark Magus')
+  create(:album, title: 'Jimi: Blues')
+end
+
+visit '/search'
+fill_in 'Search', with: 'Dark'
+click_button 'Submit'
+<span>sleep(5)</span>
+page.should have_content('Dark side of the moon')
+page.should have_content('Dark Magus')
+page.should have_no_content('Jimi: Blues')
+</code></pre>
+</section>
+
+<section class="slide">
+  <h2>No Duermas para tests de código asincrónico</h2>
+<pre><code>before do
+  create(:album, title: 'Dark side of the moon')
+  create(:album, title: 'Dark Magus')
+  create(:album, title: 'Jimi: Blues')
+end
+
+visit '/search'
+fill_in 'Search', with: 'Dark'
+click_button 'Submit'
+
+<span>wait_limit = 5
+start_time = Time.now
+until response_received do
+  raise TimeoutError if (Time.now - start_time) > wait_limit
+  response_received = page.has_content?('Here are your results')
+  sleep(0.1)
+end</span>
+page.should have_content('Dark side of the moon')
+page.should have_content('Dark Magus')
+page.should have_no_content('Jimi: Blues')
+</code></pre>
+</section>
+
+<section class="slide">
+  <h2>No Duermas para tests de código asincrónico</h2>
+<pre><code>before do
+  create(:album, title: 'Dark side of the moon')
+  create(:album, title: 'Dark Magus')
+  create(:album, title: 'Jimi: Blues')
+end
+
+visit '/search'
+fill_in 'Search', with: 'Dark'
+click_button 'Submit'
+<span>Capybara.wait_until(5) do</span>
+  page.should have_content('Dark side of the moon')
+  page.should have_content('Dark Magus')
+  page.should have_no_content('Jimi: Blues')
+<span>end</span>
+</code></pre>
+</section>
+
+<section class="slide image">
+  <h2>Fakes para servicios remotos</h2>
+  <img src="./images/kelly-fake.jpg" >
+</section>
+
+<section class="slide">
+  <h2>Usa fakes para testear servicios remotos</h2>
+  <ul>
+    <li>Elimina necesidad por connecciones de red</li>
+    <li>Tests mas rapidos</li>
+    <li>Puedes imponer el estado del servicio para testear edge cases</li>
+    <li>Puedes testear comportamiento de tu sistema cuando hay timeouts en el servicio remoto</li>
+    <li>Elimina fallas de tus tests causados por problemas en el servicio</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h3>Ejemplo: FakeKissmetrics para sham_rack</h3>
+<pre><code>class FakeKissmetrics
+  cattr_accessor :requests
+  def self.clear_requests
+    @@events = []
+  end
+
+  def call(env)
+    request = Rack::Request.new(env)
+    @@events << request.params
+    [200, { 'Content-Length' => 0 }, []]
+  end
+
+  def self.has_recorded_event?(event_name)
+    @@events.map { |r| r['_n'] }.include? event_name
+  end
+end
+</code></pre>
+</section>
+
+<section class="slide">
+  <h3>Ejemplo: FakeKissmetrics para sham_rack</h3>
+<pre><code>class FakeKissmetrics
+  cattr_accessor :requests
+  <span>def self.clear_requests
+    @@events = []
+  end</span>
+
+  def call(env)
+    request = Rack::Request.new(env)
+    @@events << request.params
+    [200, { 'Content-Length' => 0 }, []]
+  end
+
+  def self.has_recorded_event?(event_name)
+    @@events.map { |r| r['_n'] }.include? event_name
+  end
+end
+</code></pre>
+</section>
+
+<section class="slide">
+  <h3>Ejemplo: FakeKissmetrics para sham_rack</h3>
+<pre><code>class FakeKissmetrics
+  cattr_accessor :requests
+  def self.clear_requests
+    @@events = []
+  end
+
+  def call(env)
+    request = Rack::Request.new(env)
+    <span>@@events << request.params</span>
+    [200, { 'Content-Length' => 0 }, []]
+  end
+
+  <span>def self.has_recorded_event?(event_name)
+    @@events.map { |r| r['_n'] }.include? event_name
+  end</span>
+end
+</code></pre>
+</section>
+
+<section class="slide">
+  <h3>Ejemplo: FakeKissmetrics para sham_rack</h3>
+  <pre><code>require 'sham_rack'
+Before do
+  ShamRack.mount(FakeKissmetrics.new, 'trk.kissmetrics.com')
+end
+
+After do
+  FakeKissmetrics.clear_requests
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Usa fakes para testear servicios remotos</h2>
+  <pre><code>visit '/sign_in'
+fill_in 'email', with: 'user@example.com'
+fill_in 'password, with: 'password'
+click_button 'Submit'
+
+FakeKissmetrics.should have_recorded_event('Signed up')
+</code></pre>
+</section>
+
+<section class="slide image">
+  <h2>Cuarentena para tests con resultados impredecibles</h2>
+  <img src="images/andy-quaranteens-dweight.jpg" >
+</section>
+
+<section class="slide">
+  <h2>Cuarentena para tests con resultados impredecibles</h2>
+  <ul>
+    <li> Tests que tienen failures esporádicos </li>
+    <li> No permitir que hayan mas de 7 </li>
+    <li> Un dia a la semana/mes/lo que sea dedicado a limpiar la cuarentena </li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h3>Con cucumber</h3>
+  <p><code>features/something_failing.feature</code></p>
+  <pre><code>@quarantine
+Scenario: Something that is failing right now
+  When I go to the home page
+  And I vote for Pedro
+  Then ...</code></pre>
+
+  <p><code>config/cucumber.yml</code></p>
+<pre><code>default: --tags ~@quarantine
+quarantine: --tags @quarantine </code></pre>
+</section>
+
+<section class="slide">
+  <h3>Con Rspec</h3>
+  <pre><code>describe 'something that is failing right now', quarantine: true do
+  it 'does stuff' do
+    (2 + 2).should == 5
+  end
+end</code></pre>
+
+  <p><code>spec/spec_helper.rb</code></p>
+<pre><code>Rspec.configure do |config|
+  config.filter_run_excluding quarantine: true
+end</code></pre>
+
+<pre><code>> rspec --tags ~quarantine
+> rspec --tags quarantine</code></pre>
+</section>
+
+<section class="slide">
+  <h1>Refactoring de los tests</h1>
+</section>
+
+<section class="slide">
+  <h1>Testing es una disciplina</h1>
+</section>
+
+<section class="slide title">
+  <h1>¡Gracias!</h1>
+  <h4>BogotáConf - 31 de Octubre, 2011.</h4>
+  <h5>Harold Giménez - @hgimenez</h5>
+</section>
+
+
+  <a href="." title="Permalink to this slide" class="deck-permalink">#</a>
+
+  <script src="../deckjs/jquery.min.js"></script>
+  <script src="../deckjs/core/deck.core.js"></script>
+  <script src="../deckjs/extensions/navigation/deck.navigation.js"></script>
+  <script src="../deckjs/extensions/hash/deck.hash.js"></script>
+
+  <script type="text/javascript">
+    $(function() {
+      $.deck('.slide');
+    });
+  </script>
+</body>
+</html>
