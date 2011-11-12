@@ -112,8 +112,8 @@ user.name.length
 <section class="slide">
   <h2>Usa factories</h2>
   <ul>
-    <li>Fixtures inmantenibles y lentos</li>
-    <li>Manten los setups a lo mínimo</li>
+    <li>Fixtures compartidos inmantenibles y lentos</li>
+    <li>Manten los setups a lo mínimo, y cerca del test</li>
     <li>Que revelen la intención del test</li>
   </ul>
 </section>
@@ -163,6 +163,45 @@ end</span></code></pre>
 <pre><code>subject { create(:user, <span>date_of_birth: '02-03-1983'</span>) }
 its(:age) { should == 27 }
 </code></pre>
+</section>
+
+<section class="slide">
+  <h2>Fresh Fixtures</h2>
+<pre><code>let(:data) { File.read('fixtures/data.xml) }
+subject { build(:scores, data: data) }
+
+it 'builds a parsed XML document from the data' do
+  subject.document.at('.//event-description').text.should == 'Boston vs. Montreal'
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Fresh Fixtures</h2>
+<pre><code>let(:data) { <span>File.read('fixtures/data.xml)</span> }
+subject { build(:scores, data: data) }
+
+it 'builds a parsed XML document from the data' do
+  subject.document.at('.//event-description').text.should == '<span>Boston vs. Montreal</span>'
+end</code></pre>
+</section>
+
+<section class="slide">
+  <h2>Fresh Fixtures</h2>
+<pre><code>let(:data) { <span>build_xml(home_team: 'Boston', away_team: 'Montreal'</span> }
+subject { build(:scores, data: data) }
+
+it 'builds a parsed XML document from the data' do
+  subject.document.at('.//event/description').text.should == '<span>Boston vs. Montreal</span>'
+end</code></pre>
+  <span class="slide">
+<pre><code>def build_xml(opts)
+  builder = Builder::XmlMarkup.new
+  builder.event do |event|
+    event.description "#{opts[:home_team]} vs. #{opts[:away_team]}"
+    # ...
+  end
+end
+</code></pre> </span>
 </section>
 
 <section class="slide image">
@@ -703,3 +742,10 @@ end</code></pre>
   </script>
 </body>
 </html>
+
+
+
+
+### http://xunitpatterns.com/Minimal%20Fixture.html
+Minimal Fixture is important for achieving Tests as Documentation (see Goals of Test Automation on page X) and for avoiding Slow Tests (page X). A test that uses a Minimal Fixture will always be easier to understand than one which uses a fixture that contains unecessary or irrelevant information. This is true whether we are using a Fresh Fixture (page X) or a Shared Fixture (page X) although the effort to build a Minimal Fixture is typically higher with a shared fixture. Defining the Minimal Fixture is much easier for a Fresh Fixture because it need only serve a single test.
+
