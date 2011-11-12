@@ -668,6 +668,143 @@ FakeKissmetrics.should have_recorded_event('Signed up')
 </code></pre>
 </section>
 
+<section class="slide">
+  <h2>Fake Heroku en suspenders</h2>
+<pre><code>Scenario: User uses the --heroku=true command line argument
+  When I suspend a project called "test_project" with:
+    | argument | value |
+    | --heroku | true  |
+  Then the "test_project-production" heroku app should exist
+  And the "test_project-production" heroku app should exist</pre></code>
+</section>
+
+<section class="slide">
+  <h2>Fake Heroku en suspenders</h2>
+<pre><code>Scenario: User uses the --heroku=true command line argument
+  When I suspend a project called "test_project" with:
+    | argument | value |
+    | --heroku | true  |
+  <span>Then the "test_project-production" heroku app should exist
+  And the "test_project-production" heroku app should exist</span></code></pre>
+</section>
+
+<section class="slide">
+<pre><code>Then /^the "([^"]*)" heroku app should exist$/ do |app_name|
+  FakeHeroku.should have_created_app(app_name)
+end</code></pre>
+</section>
+
+<section class="slide">
+<pre><code>class FakeHeroku
+  RECORDER = File.expand_path( ... )
+
+  def initialize(args)
+    @args = args
+  end
+
+  def run!
+    File.open(RECORDER, 'a') do |file|
+      file.write @args.join(' ')
+    end
+  end
+
+  def self.clear!
+    FileUtils.rm_rf(RECORDER)
+  end
+
+  def self.has_created_app?(app_name)
+    File.open(RECORDER, 'r').read.include?("create #{app_name}")
+  end
+end
+
+After do
+  FakeHeroku.clear!
+end</code></pre>
+</section>
+
+<section class="slide">
+<pre><code>class FakeHeroku
+  RECORDER = File.expand_path( ... )
+
+  def initialize(args)
+    @args = args
+  end
+
+  <span>def run!
+    File.open(RECORDER, 'a') do |file|
+      file.write @args.join(' ')
+    end
+  end</span>
+
+  def self.clear!
+    FileUtils.rm_rf(RECORDER)
+  end
+
+  def self.has_created_app?(app_name)
+    File.open(RECORDER, 'r').read.include?("create #{app_name}")
+  end
+end
+
+After do
+  FakeHeroku.clear!
+end</code></pre>
+</section>
+
+<section class="slide">
+<pre><code>class FakeHeroku
+  RECORDER = File.expand_path( ... )
+
+  def initialize(args)
+    @args = args
+  end
+
+  def run!
+    File.open(RECORDER, 'a') do |file|
+      file.write @args.join(' ')
+    end
+  end
+
+  <span>def self.clear!
+    FileUtils.rm_rf(RECORDER)
+  end</span>
+
+  def self.has_created_app?(app_name)
+    File.open(RECORDER, 'r').read.include?("create #{app_name}")
+  end
+end
+
+<span>After do
+  FakeHeroku.clear!
+end</span></code></pre>
+</section>
+
+<section class="slide">
+<pre><code>class FakeHeroku
+  RECORDER = File.expand_path( ... )
+
+  def initialize(args)
+    @args = args
+  end
+
+  def run!
+    File.open(RECORDER, 'a') do |file|
+      file.write @args.join(' ')
+    end
+  end
+
+  def self.clear!
+    FileUtils.rm_rf(RECORDER)
+  end
+
+  <span>def self.has_created_app?(app_name)
+    File.open(RECORDER, 'r').read.include?("create #{app_name}")
+  end</span>
+
+  # recuerda:
+  # FakeHeroku.should have_created_app(app_name)
+end </code></pre>
+</section>
+
 <section class="slide image">
   <h2>Cuarentena para tests con resultados impredecibles</h2>
   <img src="images/andy-quaranteens-dweight.jpg" >
@@ -718,7 +855,28 @@ end</code></pre>
 </section>
 
 <section class="slide">
-  <h1>Testing es una disciplina</h1>
+<h3><a href="http://xunitpatterns.com">xunitpatterns.com</a></h3>
+<img src="http://xunitpatterns.com/Cover-Large.gif" height="550px">
+</section>
+
+<section class="slide">
+<h3><a href="http://www.amazon.com/Working-Effectively-Legacy-Michael-Feathers/dp/0131177052">Working Effectively with Legacy Code</a></h3>
+<img src="images/legacy.png">
+</section>
+
+<section class="slide">
+<h3><a href="http://robots.thoughtbot.com/tagged/testing">robots.thoughtbot.com/tagged/testing</a></h3>
+<img src="images/robots-testing.png">
+</section>
+
+<section class="slide">
+<h2>Practiquen BDD!</h2>
+<ul>
+  <li><a href="https://github.com/hgimenez/stack">github.com/hgimenez/stack</a>
+  <li><a href="https://github.com/hgimenez/undo_redo_stack">github.com/hgimenez/undo_redo_stack</a>
+  <li><a href="https://github.com/hgimenez/string_set">github.com/hgimenez/string_set</a>
+  <li><a href="https://github.com/coreyhaines/practice_game_of_life">github.com/coreyhaines/practice_game_of_life</a>
+</ul>
 </section>
 
 <section class="slide title">
@@ -742,10 +900,3 @@ end</code></pre>
   </script>
 </body>
 </html>
-
-
-
-
-### http://xunitpatterns.com/Minimal%20Fixture.html
-Minimal Fixture is important for achieving Tests as Documentation (see Goals of Test Automation on page X) and for avoiding Slow Tests (page X). A test that uses a Minimal Fixture will always be easier to understand than one which uses a fixture that contains unecessary or irrelevant information. This is true whether we are using a Fresh Fixture (page X) or a Shared Fixture (page X) although the effort to build a Minimal Fixture is typically higher with a shared fixture. Defining the Minimal Fixture is much easier for a Fresh Fixture because it need only serve a single test.
-
